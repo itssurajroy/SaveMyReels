@@ -35,17 +35,31 @@ function registerSettingsHandler(bot) {
 }
 
 /**
- * Show settings layout.
+ * Show settings layout. Updates the existing message inline if triggered by a callback query.
  */
 async function showSettings(ctx) {
   const userId = ctx.from.id;
   const user = await getUser(userId);
   const quality = user ? user.quality_pref || "hd" : "hd";
 
-  await ctx.reply(messages.settingsMessage(quality), {
-    parse_mode: "HTML",
-    reply_markup: qualityKeyboard(quality),
-  });
+  const text = messages.settingsMessage(quality);
+  const replyMarkup = qualityKeyboard(quality);
+
+  if (ctx.callbackQuery) {
+    try {
+      await ctx.editMessageText(text, {
+        parse_mode: "HTML",
+        reply_markup: replyMarkup,
+      });
+    } catch (err) {
+      // Avoid crash if trying to edit with same content
+    }
+  } else {
+    await ctx.reply(text, {
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+    });
+  }
 }
 
 module.exports = { registerSettingsHandler };
