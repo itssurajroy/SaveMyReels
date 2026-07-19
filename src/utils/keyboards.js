@@ -1,8 +1,8 @@
 const { InlineKeyboard } = require("grammy");
 const config = require("../config");
 
-// Helper to check if WebApp URL is secure (Telegram requirement)
-const hasSecureWebApp = config.webappUrl && config.webappUrl.startsWith("https://");
+// Check if WebApp URL is configured
+const hasWebApp = !!config.webappUrl;
 
 /**
  * Main menu keyboard (shown after /start and in help).
@@ -10,7 +10,7 @@ const hasSecureWebApp = config.webappUrl && config.webappUrl.startsWith("https:/
 function mainMenuKeyboard() {
   const kb = new InlineKeyboard();
 
-  if (hasSecureWebApp) {
+  if (hasWebApp) {
     kb.webApp("🚀 Open Web Dashboard", `${config.webappUrl}/app`).row();
   }
 
@@ -47,18 +47,10 @@ function joinChannelsKeyboard(channels) {
  * @param {string} originalUrl - The URL of the video (base64 encoded for queries)
  */
 function postDownloadKeyboard(botUsername, originalUrl) {
-  const encodedUrl = Buffer.from(originalUrl).toString("base64").slice(0, 50);
   const kb = new InlineKeyboard();
 
-  // Media Utilities
-  kb.text("🎵 Extract Audio", `audio_${encodedUrl}`)
-    .text("✂️ Trim Video", `trim_${encodedUrl}`)
-    .row();
-
-  // SaaS engagement
-  kb.text("🌟 Rate Bot", `rate_${encodedUrl}`);
-  if (hasSecureWebApp) {
-    kb.webApp("📊 View Web Portal", `${config.webappUrl}/app`);
+  if (hasWebApp) {
+    kb.webApp("📊 View Web Dashboard", `${config.webappUrl}/app`);
   } else {
     kb.text("⭐ Go Premium", "premium_info");
   }
@@ -71,33 +63,6 @@ function postDownloadKeyboard(botUsername, originalUrl) {
   );
 
   return kb;
-}
-
-/**
- * Video Trimming Options keyboard.
- */
-function trimMenuKeyboard(encodedUrl) {
-  return new InlineKeyboard()
-    .text("✂️ First 15 seconds", `docut_15_${encodedUrl}`)
-    .text("✂️ First 30 seconds", `docut_30_${encodedUrl}`)
-    .row()
-    .text("✂️ Custom Range", `docut_custom_${encodedUrl}`)
-    .row()
-    .text("🔙 Back to Menu", "back_to_menu");
-}
-
-/**
- * Feedback rating keyboard.
- */
-function ratingKeyboard(encodedUrl) {
-  return new InlineKeyboard()
-    .text("⭐ 1", `rateval_1_${encodedUrl}`)
-    .text("⭐ 2", `rateval_2_${encodedUrl}`)
-    .text("⭐ 3", `rateval_3_${encodedUrl}`)
-    .text("⭐ 4", `rateval_4_${encodedUrl}`)
-    .text("⭐ 5", `rateval_5_${encodedUrl}`)
-    .row()
-    .text("🔙 Back to Menu", "back_to_menu");
 }
 
 /**
@@ -165,8 +130,6 @@ module.exports = {
   mainMenuKeyboard,
   joinChannelsKeyboard,
   postDownloadKeyboard,
-  trimMenuKeyboard,
-  ratingKeyboard,
   premiumKeyboard,
   qualityKeyboard,
   retryKeyboard,

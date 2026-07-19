@@ -1,162 +1,97 @@
-const { spawn, execFile } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const config = require("../config");
-const { ensureDir } = require("../utils/helpers");
-
-// Resolve local yt-dlp binary path if available
-const localYtdlpPath = path.join(__dirname, "../../bin/yt-dlp");
-const localYtdlpWinPath = path.join(__dirname, "../../bin/yt-dlp.exe");
-const ytdlpCmd = fs.existsSync(localYtdlpPath)
-  ? localYtdlpPath
-  : fs.existsSync(localYtdlpWinPath)
-  ? localYtdlpWinPath
-  : "yt-dlp";
 
 /**
- * Download a video using yt-dlp with real-time progress callbacks.
+ * Download / Resolve a video URL using the Cobalt.tools public API.
+ * Bypasses need for local yt-dlp binaries on Vercel.
+ * Returns the direct CDN URL so Telegram can download it directly.
+ * 
  * @param {string} url - The video URL
  * @param {string} quality - 'hd' or 'sd'
- * @param {Function} onProgress - Callback function: (percent, speed, eta) => {}
- * @returns {Promise<{ filePath: string, title: string, fileSize: number }>}
+ * @returns {Promise<{ filePath: string, title: string, fileSize: number, isDirectUrl: boolean }>}
  */
-async function downloadVideo(url, quality = "hd", onProgress = null) {
-  ensureDir(config.downloadDir);
+async function downloadVideo(url, quality = "hd") {
+  const isSd = quality === "sd";
 
-  const outputTemplate = path.join(
-    config.downloadDir,
-    `%(id)s_${Date.now()}.%(ext)s`
-  );
+  // Cobalt.tools API Request payload
+  const payload = {
+    url: url,
+    videoQuality: isSd ? "360" : "720", // Limit quality on free tier to prevent file size overflow
+    audioFormat: "mp3",
+    filenamePattern: "basic",
+    isAudioOnly: false,
+    isNoTTWatermark: true,
+  };
 
-  const args = [
-    url,
-    "-o",
-    outputTemplate,
-    "--no-playlist",
-    "--no-warnings",
-    "--no-check-certificates",
-    "--max-filesize",
-    `${config.maxFileSizeMB}m`,
-    "--merge-output-format",
-    "mp4",
-    "--restrict-filenames",
-    "--newline", // Output progress details line by line
+  const cobaltInstances = [
+    "https://api.cobalt.tools/api/json",
+    "https://cobalt.tools/api/json",
+    "https://co.wuk.sh/api/json",
   ];
 
-  if (quality === "sd") {
-    args.push("-f", "worst[ext=mp4]/worst");
-  } else {
-    args.push(
-      "-f",
-      "best[ext=mp4][filesize<50M]/best[ext=mp4]/best[filesize<50M]/best"
-    );
+  let lastError = null;
+
+  for (const instance of cobaltInstances) {
+    try {
+      const response = await fetch(instance, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "User-Agent": "SaveMyReelsBot/1.0",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Instance ${instance} returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        throw new Error(data.text || "API returned error status");
+      }
+
+      // Cobalt returns status: "stream" or "redirect" with a direct url
+      if (data.url) {
+        return {
+          filePath: data.url, // Return direct URL as 'filePath'
+          title: data.filename || "video",
+          fileSize: 0, // Not locally downloaded, size is unknown
+          isDirectUrl: true, // Marker to indicate this is a URL, not a local file path
+        };
+      }
+
+      if (data.status === "picker") {
+        // Multi-image post, pick the first slide link
+        if (data.picker && data.picker.length > 0) {
+          const firstSlide = data.picker[0];
+          return {
+            filePath: firstSlide.url,
+            title: "slide_1",
+            fileSize: 0,
+            isDirectUrl: true,
+          };
+        }
+      }
+
+      throw new Error("No stream URL returned in JSON response");
+    } catch (err) {
+      console.warn(`⚠️ Failed using Cobalt instance ${instance}:`, err.message);
+      lastError = err;
+    }
   }
 
-  return new Promise((resolve, reject) => {
-    const process = spawn(ytdlpCmd, args);
-    let lastStdoutLine = "";
-    let errorOutput = "";
-
-    process.stdout.on("data", (data) => {
-      const output = data.toString();
-      const lines = output.split("\n");
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        lastStdoutLine = line;
-
-        // Parse progress details (e.g., "[download]  35.2% of 12.44MiB at  2.12MiB/s ETA 00:03")
-        if (onProgress && line.includes("[download]") && line.includes("%")) {
-          const percentMatch = line.match(/(\d+\.\d+)%/);
-          const speedMatch = line.match(/at\s+(\S+\/s)/);
-          const etaMatch = line.match(/ETA\s+(\S+)/);
-
-          if (percentMatch) {
-            const percent = parseFloat(percentMatch[1]);
-            const speed = speedMatch ? speedMatch[1] : "N/A";
-            const eta = etaMatch ? etaMatch[1] : "N/A";
-            onProgress(percent, speed, eta);
-          }
-        }
-      }
-    });
-
-    process.stderr.on("data", (data) => {
-      errorOutput += data.toString();
-    });
-
-    process.on("close", (code) => {
-      if (code !== 0) {
-        if (errorOutput.includes("Private") || errorOutput.includes("login")) {
-          return reject(new Error("PRIVATE_ACCOUNT"));
-        }
-        if (errorOutput.includes("not a valid URL") || errorOutput.includes("Unsupported URL")) {
-          return reject(new Error("INVALID_URL"));
-        }
-        if (errorOutput.includes("File is larger than max-filesize")) {
-          return reject(new Error("FILE_TOO_LARGE"));
-        }
-        if (errorOutput.includes("geo") || errorOutput.includes("not available")) {
-          return reject(new Error("GEO_RESTRICTED"));
-        }
-        return reject(new Error(`DOWNLOAD_FAILED: ${errorOutput || "Unknown exit error"}`));
-      }
-
-      // Since we used newline progress output, we need to find the created file in the folder.
-      // The easiest way is reading the download folder and looking for the most recently modified file.
-      try {
-        const files = fs.readdirSync(config.downloadDir);
-        let newestFile = null;
-        let newestTime = 0;
-
-        for (const file of files) {
-          const fullPath = path.join(config.downloadDir, file);
-          const stats = fs.statSync(fullPath);
-          if (stats.isFile() && stats.mtimeMs > newestTime) {
-            newestFile = fullPath;
-            newestTime = stats.mtimeMs;
-          }
-        }
-
-        if (!newestFile) {
-          return reject(new Error("DOWNLOAD_FAILED: Output file not resolved"));
-        }
-
-        const stats = fs.statSync(newestFile);
-        const fileSizeMB = stats.size / (1024 * 1024);
-
-        if (fileSizeMB > config.maxFileSizeMB) {
-          try { fs.unlinkSync(newestFile); } catch {}
-          return reject(new Error("FILE_TOO_LARGE"));
-        }
-
-        resolve({
-          filePath: newestFile,
-          title: path.basename(newestFile, path.extname(newestFile)),
-          fileSize: stats.size,
-          fileSizeMB: fileSizeMB.toFixed(2),
-        });
-      } catch (err) {
-        reject(new Error(`DOWNLOAD_RESOLVE_FAILED: ${err.message}`));
-      }
-    });
-  });
+  throw new Error(`DOWNLOAD_FAILED: ${lastError ? lastError.message : "All API instances failed"}`);
 }
 
 /**
- * Check if yt-dlp is installed and accessible.
+ * Check if downloader is ready. Always true on API-mode.
  */
 async function isYtDlpInstalled() {
-  return new Promise((resolve) => {
-    execFile(ytdlpCmd, ["--version"], (error, stdout) => {
-      if (error) {
-        resolve(false);
-      } else {
-        console.log(`✅ yt-dlp version: ${stdout.trim()}`);
-        resolve(true);
-      }
-    });
-  });
+  return true;
 }
 
 module.exports = { downloadVideo, isYtDlpInstalled };

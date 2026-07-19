@@ -3,11 +3,11 @@ const { getDailyDownloadCount, getDailyLimit } = require("../database/queries");
 /**
  * Check if a user is under their daily download limit.
  * @param {number} userId - Telegram user ID
- * @returns {{ allowed: boolean, used: number, limit: number, remaining: number }}
+ * @returns {Promise<{ allowed: boolean, used: number, limit: number, remaining: number }>}
  */
-function checkRateLimit(userId) {
-  const used = getDailyDownloadCount(userId);
-  const limit = getDailyLimit(userId);
+async function checkRateLimit(userId) {
+  const used = await getDailyDownloadCount(userId);
+  const limit = await getDailyLimit(userId);
 
   if (limit === Infinity) {
     return { allowed: true, used, limit: Infinity, remaining: Infinity };

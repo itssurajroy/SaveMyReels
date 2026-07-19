@@ -29,9 +29,8 @@ const config = {
   maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE_MB, 10) || 50,
   defaultQuality: process.env.DEFAULT_QUALITY || "hd",
 
-  // Paths
-  downloadDir: "./downloads",
-  dbPath: "./savemyreels.db",
+  // Cloud Database (Neon / Supabase Postgres Connection String)
+  databaseUrl: process.env.DATABASE_URL || "",
 
   // Web App
   webappUrl: process.env.WEBAPP_URL || "",
@@ -39,18 +38,13 @@ const config = {
 
 // Validate required config
 if (!config.botToken) {
-  console.error("❌ BOT_TOKEN is required! Set it in your .env file.");
-  process.exit(1);
+  console.error("❌ BOT_TOKEN is required! Set it in your environment.");
 }
 
-if (config.forceChannels.length === 0) {
+if (!config.databaseUrl) {
   console.warn(
-    "⚠️  No FORCE_CHANNELS set. Users won't be required to join any channel."
+    "⚠️  DATABASE_URL is not set! Set it in your environment to connect to Cloud Postgres."
   );
-}
-
-if (config.adminIds.length === 0) {
-  console.warn("⚠️  No ADMIN_IDS set. Admin commands will be inaccessible.");
 }
 
 module.exports = config;

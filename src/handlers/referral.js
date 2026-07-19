@@ -20,15 +20,15 @@ function registerReferralHandler(bot) {
 }
 
 /**
- * Show referral info with link and stats.
+ * Show referral info.
  */
 async function showReferralInfo(ctx, bot) {
   const userId = ctx.from.id;
   const botInfo = await bot.api.getMe();
 
   const referralLink = generateReferralLink(botInfo.username, userId);
-  const stats = getReferralStats(userId);
-  const totalLimit = getDailyLimit(userId);
+  const stats = await getReferralStats(userId);
+  const totalLimit = await getDailyLimit(userId);
 
   await ctx.reply(
     messages.referralInfoMessage(

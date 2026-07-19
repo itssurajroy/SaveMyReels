@@ -1,37 +1,30 @@
-const { getDb, saveDatabase } = require("./init");
+const { getPool } = require("./init");
 
-// ─── Helper ──────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────
 
 /**
- * Run a SELECT query and return all matching rows as an array of objects.
+ * Execute a query that returns rows.
  */
-function queryAll(sql, params = []) {
-  const db = getDb();
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) {
-    rows.push(stmt.getAsObject());
-  }
-  stmt.free();
-  return rows;
+async function queryAll(sql, params = []) {
+  const pool = getPool();
+  const res = await pool.query(sql, params);
+  return res.rows;
 }
 
 /**
- * Run a SELECT query and return the first matching row as an object, or null.
+ * Execute a query that returns at most one row.
  */
-function queryOne(sql, params = []) {
-  const rows = queryAll(sql, params);
+async function queryOne(sql, params = []) {
+  const rows = await queryAll(sql, params);
   return rows.length > 0 ? rows[0] : null;
 }
 
 /**
- * Run an INSERT/UPDATE/DELETE query. Saves to disk after writes.
+ * Execute a non-SELECT query (INSERT, UPDATE, DELETE).
  */
-function execute(sql, params = []) {
-  const db = getDb();
-  db.run(sql, params);
-  saveDatabase();
+async function execute(sql, params = []) {
+  const pool = getPool();
+  await pool.query(sql, params);
 }
 
 // ─── User Operations ─────────────────────────────────────────
@@ -39,44 +32,44 @@ function execute(sql, params = []) {
 /**
  * Create a new user or ignore if already exists.
  */
-function createUser(id, username, firstName, referredBy = null) {
-  const existing = getUser(id);
-  if (existing) return false; // Already exists
+async function createUser(id, username, firstName, referredBy = null) {
+  const existing = await getUser(id);
+  if (existing) return false;
 
-  execute(
-    `INSERT INTO users (id, username, first_name, referred_by) VALUES (?, ?, ?, ?)`,
+  await execute(
+    `INSERT INTO users (id, username, first_name, referred_by) VALUES ($1, $2, $3, $4)`,
     [id, username, firstName, referredBy]
   );
 
-  // If they have a referrer, increment referrer's count
   if (referredBy) {
-    incrementReferralCount(referredBy);
+    await incrementReferralCount(referredBy);
   }
 
-  return true; // New user created
+  return true;
 }
 
 /**
  * Get a user by their Telegram ID.
  */
-function getUser(id) {
-  return queryOne("SELECT * FROM users WHERE id = ?", [id]);
+async function getUser(id) {
+  // Telegram ID is a BIGINT, parse to string or big integer
+  return queryOne("SELECT * FROM users WHERE id = $1", [id]);
 }
 
 /**
  * Check if a user exists.
  */
-function userExists(id) {
-  const row = queryOne("SELECT 1 as found FROM users WHERE id = ?", [id]);
+async function userExists(id) {
+  const row = await queryOne("SELECT 1 as found FROM users WHERE id = $1", [id]);
   return !!row;
 }
 
 /**
- * Update user's username and first_name (they can change on Telegram).
+ * Update user's username and first_name.
  */
-function updateUserInfo(id, username, firstName) {
-  execute(
-    "UPDATE users SET username = ?, first_name = ? WHERE id = ?",
+async function updateUserInfo(id, username, firstName) {
+  await execute(
+    "UPDATE users SET username = $1, first_name = $2 WHERE id = $3",
     [username, firstName, id]
   );
 }
@@ -84,22 +77,22 @@ function updateUserInfo(id, username, firstName) {
 /**
  * Ban a user.
  */
-function banUser(id) {
-  execute("UPDATE users SET is_banned = 1 WHERE id = ?", [id]);
+async function banUser(id) {
+  await execute("UPDATE users SET is_banned = 1 WHERE id = $1", [id]);
 }
 
 /**
  * Unban a user.
  */
-function unbanUser(id) {
-  execute("UPDATE users SET is_banned = 0 WHERE id = ?", [id]);
+async function unbanUser(id) {
+  await execute("UPDATE users SET is_banned = 0 WHERE id = $1", [id]);
 }
 
 /**
  * Set user's video quality preference.
  */
-function setQualityPref(id, quality) {
-  execute("UPDATE users SET quality_pref = ? WHERE id = ?", [quality, id]);
+async function setQualityPref(id, quality) {
+  await execute("UPDATE users SET quality_pref = $1 WHERE id = $2", [quality, id]);
 }
 
 // ─── Referral Operations ─────────────────────────────────────
@@ -107,9 +100,9 @@ function setQualityPref(id, quality) {
 /**
  * Increment referral count for a user.
  */
-function incrementReferralCount(userId) {
-  execute(
-    "UPDATE users SET referral_count = referral_count + 1 WHERE id = ?",
+async function incrementReferralCount(userId) {
+  await execute(
+    "UPDATE users SET referral_count = referral_count + 1 WHERE id = $1",
     [userId]
   );
 }
@@ -117,15 +110,16 @@ function incrementReferralCount(userId) {
 /**
  * Get referral stats for a user.
  */
-function getReferralStats(userId) {
+async function getReferralStats(userId) {
   const config = require("../config");
-  const user = queryOne(
-    "SELECT referral_count FROM users WHERE id = ?",
+  const user = await queryOne(
+    "SELECT referral_count FROM users WHERE id = $1",
     [userId]
   );
+  const count = user ? user.referral_count : 0;
   return {
-    count: user ? user.referral_count : 0,
-    bonusDownloads: user ? user.referral_count * config.referralBonus : 0,
+    count,
+    bonusDownloads: count * config.referralBonus,
   };
 }
 
@@ -134,12 +128,12 @@ function getReferralStats(userId) {
 /**
  * Activate premium for a user for N days.
  */
-function activatePremium(userId, days) {
-  execute(
+async function activatePremium(userId, days) {
+  await execute(
     `UPDATE users 
      SET is_premium = 1, 
-         premium_expires = datetime('now', '+' || ? || ' days')
-     WHERE id = ?`,
+         premium_expires = CURRENT_TIMESTAMP + ($1 || ' days')::INTERVAL
+     WHERE id = $2`,
     [days, userId]
   );
 }
@@ -147,21 +141,20 @@ function activatePremium(userId, days) {
 /**
  * Check if a user's premium is currently active.
  */
-function isPremiumActive(userId) {
-  const user = queryOne(
-    "SELECT is_premium, premium_expires FROM users WHERE id = ?",
+async function isPremiumActive(userId) {
+  const user = await queryOne(
+    "SELECT is_premium, premium_expires FROM users WHERE id = $1",
     [userId]
   );
 
   if (!user || !user.is_premium) return false;
 
-  // Check if premium has expired
   if (user.premium_expires) {
-    const expiresAt = new Date(user.premium_expires + "Z");
+    const expiresAt = new Date(user.premium_expires);
     if (expiresAt <= new Date()) {
-      // Premium expired, deactivate it
-      execute(
-        "UPDATE users SET is_premium = 0, premium_expires = NULL WHERE id = ?",
+      // Premium expired, deactivate
+      await execute(
+        "UPDATE users SET is_premium = 0, premium_expires = NULL WHERE id = $1",
         [userId]
       );
       return false;
@@ -174,9 +167,9 @@ function isPremiumActive(userId) {
 /**
  * Get premium expiry date for a user.
  */
-function getPremiumExpiry(userId) {
-  const user = queryOne(
-    "SELECT premium_expires FROM users WHERE id = ?",
+async function getPremiumExpiry(userId) {
+  const user = await queryOne(
+    "SELECT premium_expires FROM users WHERE id = $1",
     [userId]
   );
   return user ? user.premium_expires : null;
@@ -187,9 +180,9 @@ function getPremiumExpiry(userId) {
 /**
  * Log a download for a user.
  */
-function logDownload(userId, url, platform) {
-  execute(
-    "INSERT INTO downloads (user_id, url, platform) VALUES (?, ?, ?)",
+async function logDownload(userId, url, platform) {
+  await execute(
+    "INSERT INTO downloads (user_id, url, platform) VALUES ($1, $2, $3)",
     [userId, url, platform]
   );
 }
@@ -197,25 +190,24 @@ function logDownload(userId, url, platform) {
 /**
  * Get the number of downloads a user has made today (UTC).
  */
-function getDailyDownloadCount(userId) {
-  const row = queryOne(
+async function getDailyDownloadCount(userId) {
+  const row = await queryOne(
     `SELECT COUNT(*) as count FROM downloads 
-     WHERE user_id = ? AND date(downloaded_at) = date('now')`,
+     WHERE user_id = $1 AND downloaded_at::date = CURRENT_DATE`,
     [userId]
   );
-  return row ? row.count : 0;
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
  * Get the daily download limit for a user.
- * Base limit + (referral_count * bonus), or Infinity if premium.
  */
-function getDailyLimit(userId) {
+async function getDailyLimit(userId) {
   const config = require("../config");
-  if (isPremiumActive(userId)) return Infinity;
+  if (await isPremiumActive(userId)) return Infinity;
 
-  const user = queryOne(
-    "SELECT referral_count FROM users WHERE id = ?",
+  const user = await queryOne(
+    "SELECT referral_count FROM users WHERE id = $1",
     [userId]
   );
   const referralCount = user ? user.referral_count : 0;
@@ -226,10 +218,10 @@ function getDailyLimit(userId) {
 /**
  * Get recent download history for a user.
  */
-function getDownloadHistory(userId, limit = 10) {
+async function getDownloadHistory(userId, limit = 10) {
   return queryAll(
     `SELECT url, platform, downloaded_at FROM downloads 
-     WHERE user_id = ? ORDER BY downloaded_at DESC LIMIT ?`,
+     WHERE user_id = $1 ORDER BY downloaded_at DESC LIMIT $2`,
     [userId, limit]
   );
 }
@@ -239,64 +231,64 @@ function getDownloadHistory(userId, limit = 10) {
 /**
  * Get total number of registered users.
  */
-function getTotalUsers() {
-  const row = queryOne("SELECT COUNT(*) as count FROM users");
-  return row ? row.count : 0;
+async function getTotalUsers() {
+  const row = await queryOne("SELECT COUNT(*) as count FROM users");
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
- * Get number of active users today (users who downloaded today).
+ * Get active users today.
  */
-function getActiveUsersToday() {
-  const row = queryOne(
+async function getActiveUsersToday() {
+  const row = await queryOne(
     `SELECT COUNT(DISTINCT user_id) as count FROM downloads 
-     WHERE date(downloaded_at) = date('now')`
+     WHERE downloaded_at::date = CURRENT_DATE`
   );
-  return row ? row.count : 0;
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
  * Get total downloads today.
  */
-function getDownloadsToday() {
-  const row = queryOne(
+async function getDownloadsToday() {
+  const row = await queryOne(
     `SELECT COUNT(*) as count FROM downloads 
-     WHERE date(downloaded_at) = date('now')`
+     WHERE downloaded_at::date = CURRENT_DATE`
   );
-  return row ? row.count : 0;
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
- * Get total downloads across all time.
+ * Get total downloads all time.
  */
-function getTotalDownloads() {
-  const row = queryOne("SELECT COUNT(*) as count FROM downloads");
-  return row ? row.count : 0;
+async function getTotalDownloads() {
+  const row = await queryOne("SELECT COUNT(*) as count FROM downloads");
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
- * Get number of premium users.
+ * Get premium users.
  */
-function getPremiumUserCount() {
-  const row = queryOne(
+async function getPremiumUserCount() {
+  const row = await queryOne(
     `SELECT COUNT(*) as count FROM users 
-     WHERE is_premium = 1 AND premium_expires > datetime('now')`
+     WHERE is_premium = 1 AND premium_expires > CURRENT_TIMESTAMP`
   );
-  return row ? row.count : 0;
+  return row ? parseInt(row.count, 10) : 0;
 }
 
 /**
- * Get all user IDs (for broadcast). Returns an array of user ID numbers.
+ * Get all user IDs (for broadcast).
  */
-function getAllUserIds() {
-  const rows = queryAll("SELECT id FROM users WHERE is_banned = 0");
-  return rows.map((r) => r.id);
+async function getAllUserIds() {
+  const rows = await queryAll("SELECT id FROM users WHERE is_banned = 0");
+  return rows.map((r) => parseInt(r.id, 10));
 }
 
 /**
  * Get download stats by platform.
  */
-function getDownloadsByPlatform() {
+async function getDownloadsByPlatform() {
   return queryAll(
     `SELECT platform, COUNT(*) as count FROM downloads 
      GROUP BY platform ORDER BY count DESC`

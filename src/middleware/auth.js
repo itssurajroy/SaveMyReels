@@ -12,7 +12,6 @@ const config = require("../config");
  */
 function authMiddleware() {
   return async (ctx, next) => {
-    // Only process messages and callback queries from users
     if (!ctx.from) return next();
 
     const userId = ctx.from.id;
@@ -20,16 +19,15 @@ function authMiddleware() {
     const firstName = ctx.from.first_name || "User";
 
     // 1. Auto-register or update user info
-    const existingUser = getUser(userId);
+    const existingUser = await getUser(userId);
     if (!existingUser) {
-      createUser(userId, username, firstName);
+      await createUser(userId, username, firstName);
     } else {
-      // Update username/name in case they changed
-      updateUserInfo(userId, username, firstName);
+      await updateUserInfo(userId, username, firstName);
     }
 
     // 2. Check if user is banned
-    const user = getUser(userId);
+    const user = await getUser(userId);
     if (user && user.is_banned) {
       if (ctx.message) {
         await ctx.reply(messages.bannedMessage(), { parse_mode: "HTML" });
@@ -40,7 +38,6 @@ function authMiddleware() {
     }
 
     // 3. Check forced channel membership
-    //    Skip for admin users and for the "verify_join" callback
     const isAdmin = config.adminIds.includes(userId);
     const isVerifyCallback =
       ctx.callbackQuery && ctx.callbackQuery.data === "verify_join";
@@ -71,7 +68,6 @@ function authMiddleware() {
       }
     }
 
-    // All checks passed, continue
     return next();
   };
 }

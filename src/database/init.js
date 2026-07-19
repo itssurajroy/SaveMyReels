@@ -1,105 +1,93 @@
-const initSqlJs = require("sql.js");
-const fs = require("fs");
-const path = require("path");
+const { Pool } = require("pg");
 const config = require("../config");
 
-let db;
+let pool;
 
 /**
- * Initialize the SQLite database using sql.js (pure JS, no native deps).
- * Loads existing DB from disk if available, otherwise creates new.
+ * Initialize Postgres Connection Pool and create tables.
  */
 async function initDatabase() {
-  const SQL = await initSqlJs();
-
-  // Load existing database if it exists
-  if (fs.existsSync(config.dbPath)) {
-    const fileBuffer = fs.readFileSync(config.dbPath);
-    db = new SQL.Database(fileBuffer);
-    console.log("✅ Database loaded from disk");
-  } else {
-    db = new SQL.Database();
-    console.log("✅ New database created");
+  if (!config.databaseUrl) {
+    throw new Error("DATABASE_URL is not set in configuration!");
   }
 
-  // Create tables if they don't exist
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY,
-      username TEXT,
-      first_name TEXT,
-      referred_by INTEGER,
-      referral_count INTEGER DEFAULT 0,
-      is_premium INTEGER DEFAULT 0,
-      premium_expires TEXT,
-      quality_pref TEXT DEFAULT 'hd',
-      is_banned INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    )
-  `);
+  pool = new Pool({
+    connectionString: config.databaseUrl,
+    ssl: {
+      rejectUnauthorized: false, // Required for Neon / Supabase connection ssl
+    },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS downloads (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      url TEXT NOT NULL,
-      platform TEXT NOT NULL,
-      downloaded_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    )
-  `);
-
-  // Create indexes for performance
-  db.run(`
-    CREATE INDEX IF NOT EXISTS idx_downloads_user_date 
-    ON downloads(user_id, downloaded_at)
-  `);
-
-  db.run(`
-    CREATE INDEX IF NOT EXISTS idx_users_referred_by 
-    ON users(referred_by)
-  `);
-
-  // Save to disk
-  saveDatabase();
-
-  return db;
-}
-
-/**
- * Get the database instance. Must call initDatabase() first.
- */
-function getDb() {
-  if (!db) {
-    throw new Error("Database not initialized. Call initDatabase() first.");
-  }
-  return db;
-}
-
-/**
- * Save the in-memory database to disk.
- * Call this after any write operations.
- */
-function saveDatabase() {
-  if (!db) return;
+  // Verify connection
+  const client = await pool.connect();
   try {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(config.dbPath, buffer);
-  } catch (err) {
-    console.error("❌ Failed to save database:", err.message);
+    console.log("✅ Connected to Postgres database");
+
+    // Create users table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id BIGINT PRIMARY KEY,
+        username TEXT,
+        first_name TEXT,
+        referred_by BIGINT,
+        referral_count INTEGER DEFAULT 0,
+        is_premium INTEGER DEFAULT 0,
+        premium_expires TIMESTAMP WITH TIME ZONE,
+        quality_pref TEXT DEFAULT 'hd',
+        is_banned INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create downloads table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS downloads (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        url TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
+    // Create indexes if they do not exist
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS idx_downloads_user_date ON downloads(user_id, downloaded_at)`
+    );
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS idx_users_referred_by ON users(referred_by)`
+    );
+
+    console.log("✅ Database schema verified");
+  } finally {
+    client.release();
   }
+
+  return pool;
 }
 
 /**
- * Close the database connection gracefully.
+ * Get the connection pool. Must call initDatabase() first.
  */
-function closeDatabase() {
-  if (db) {
-    saveDatabase();
-    db.close();
-    console.log("📦 Database connection closed");
+function getPool() {
+  if (!pool) {
+    throw new Error("Database pool not initialized. Call initDatabase() first.");
+  }
+  return pool;
+}
+
+/**
+ * Close pool connection.
+ */
+async function closeDatabase() {
+  if (pool) {
+    await pool.end();
+    console.log("📦 Postgres pool closed");
   }
 }
 
-module.exports = { initDatabase, getDb, saveDatabase, closeDatabase };
+module.exports = { initDatabase, getPool, closeDatabase };

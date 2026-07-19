@@ -4,7 +4,7 @@ const { premiumKeyboard, backKeyboard } = require("../utils/keyboards");
 const messages = require("../utils/messages");
 
 /**
- * Register premium-related handlers.
+ * Register premium handlers.
  */
 function registerPremiumHandler(bot) {
   // /premium command
@@ -25,10 +25,10 @@ function registerPremiumHandler(bot) {
     const userId = ctx.from.id;
 
     // Check if already premium
-    if (isPremiumActive(userId)) {
-      const expiry = getPremiumExpiry(userId);
+    if (await isPremiumActive(userId)) {
+      const expiry = await getPremiumExpiry(userId);
       const expiryDate = expiry
-        ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+        ? new Date(expiry).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "long",
             year: "numeric",
@@ -50,7 +50,7 @@ function registerPremiumHandler(bot) {
     );
   });
 
-  // Handle pre-checkout query (must answer within 10 seconds)
+  // Handle pre-checkout query
   bot.on("pre_checkout_query", async (ctx) => {
     await ctx.answerPreCheckoutQuery(true);
   });
@@ -62,11 +62,11 @@ function registerPremiumHandler(bot) {
 
     if (payment.invoice_payload === "premium_30d") {
       // Activate premium for 30 days
-      activatePremium(userId, config.premiumDurationDays);
+      await activatePremium(userId, config.premiumDurationDays);
 
-      const expiry = getPremiumExpiry(userId);
+      const expiry = await getPremiumExpiry(userId);
       const expiryDate = expiry
-        ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+        ? new Date(expiry).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "long",
             year: "numeric",
@@ -91,10 +91,10 @@ async function showPremiumInfo(ctx) {
   const userId = ctx.from.id;
 
   // Check if already premium
-  if (isPremiumActive(userId)) {
-    const expiry = getPremiumExpiry(userId);
+  if (await isPremiumActive(userId)) {
+    const expiry = await getPremiumExpiry(userId);
     const expiryDate = expiry
-      ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+      ? new Date(expiry).toLocaleDateString("en-IN", {
           day: "numeric",
           month: "long",
           year: "numeric",

@@ -14,18 +14,23 @@ function registerAdminHandler(bot) {
   bot.command("stats", async (ctx) => {
     if (!isAdmin(ctx.from.id)) return;
 
-    const stats = {
-      totalUsers: queries.getTotalUsers(),
-      activeToday: queries.getActiveUsersToday(),
-      downloadsToday: queries.getDownloadsToday(),
-      totalDownloads: queries.getTotalDownloads(),
-      premiumUsers: queries.getPremiumUserCount(),
-      byPlatform: queries.getDownloadsByPlatform(),
-    };
+    try {
+      const stats = {
+        totalUsers: await queries.getTotalUsers(),
+        activeToday: await queries.getActiveUsersToday(),
+        downloadsToday: await queries.getDownloadsToday(),
+        totalDownloads: await queries.getTotalDownloads(),
+        premiumUsers: await queries.getPremiumUserCount(),
+        byPlatform: await queries.getDownloadsByPlatform(),
+      };
 
-    await ctx.reply(messages.adminStatsMessage(stats), {
-      parse_mode: "HTML",
-    });
+      await ctx.reply(messages.adminStatsMessage(stats), {
+        parse_mode: "HTML",
+      });
+    } catch (err) {
+      console.error(err);
+      await ctx.reply(`❌ Stats failed: ${err.message}`);
+    }
   });
 
   // /broadcast <message> — send message to all users
@@ -41,18 +46,23 @@ function registerAdminHandler(bot) {
       return;
     }
 
-    const userCount = queries.getAllUserIds().length;
+    try {
+      const userIds = await queries.getAllUserIds();
+      const userCount = userIds.length;
 
-    // Store pending broadcast
-    pendingBroadcasts.set(ctx.from.id, text.trim());
+      // Store pending broadcast
+      pendingBroadcasts.set(ctx.from.id, text.trim());
 
-    await ctx.reply(
-      messages.broadcastPreviewMessage(text.trim(), userCount),
-      {
-        parse_mode: "HTML",
-        reply_markup: broadcastConfirmKeyboard(),
-      }
-    );
+      await ctx.reply(
+        messages.broadcastPreviewMessage(text.trim(), userCount),
+        {
+          parse_mode: "HTML",
+          reply_markup: broadcastConfirmKeyboard(),
+        }
+      );
+    } catch (err) {
+      await ctx.reply(`❌ Broadcast check failed: ${err.message}`);
+    }
   });
 
   // Callback: confirm broadcast
@@ -68,50 +78,51 @@ function registerAdminHandler(bot) {
 
     pendingBroadcasts.delete(ctx.from.id);
 
-    const userIds = queries.getAllUserIds();
-    let sent = 0;
-    let failed = 0;
+    try {
+      const userIds = await queries.getAllUserIds();
+      let sent = 0;
+      let failed = 0;
 
-    // Edit message to show progress
-    await ctx.editMessageText("📢 <b>Broadcasting...</b> (0%)", {
-      parse_mode: "HTML",
-    });
+      // Edit message to show progress
+      await ctx.editMessageText("📢 <b>Broadcasting...</b> (0%)", {
+        parse_mode: "HTML",
+      });
 
-    for (let i = 0; i < userIds.length; i++) {
-      try {
-        await bot.api.sendMessage(userIds[i], broadcastText, {
-          parse_mode: "HTML",
-        });
-        sent++;
-      } catch {
-        failed++;
-      }
-
-      // Update progress every 50 users
-      if ((i + 1) % 50 === 0 || i === userIds.length - 1) {
-        const percent = Math.round(((i + 1) / userIds.length) * 100);
+      for (let i = 0; i < userIds.length; i++) {
         try {
-          await ctx.api.editMessageText(
-            ctx.chat.id,
-            ctx.callbackQuery.message.message_id,
-            `📢 <b>Broadcasting...</b> (${percent}%)\n📤 Sent: ${sent} | ❌ Failed: ${failed}`,
-            { parse_mode: "HTML" }
-          );
+          await bot.api.sendMessage(userIds[i], broadcastText, {
+            parse_mode: "HTML",
+          });
+          sent++;
         } catch {
-          // Ignore edit errors (rate limit, message unchanged)
+          failed++;
+        }
+
+        // Update progress every 50 users
+        if ((i + 1) % 50 === 0 || i === userIds.length - 1) {
+          const percent = Math.round(((i + 1) / userIds.length) * 100);
+          try {
+            await ctx.api.editMessageText(
+              ctx.chat.id,
+              ctx.callbackQuery.message.message_id,
+              `📢 <b>Broadcasting...</b> (${percent}%)\n📤 Sent: ${sent} | ❌ Failed: ${failed}`,
+              { parse_mode: "HTML" }
+            );
+          } catch {}
+        }
+
+        // Rate limiting — Telegram allows ~30 messages/second
+        if ((i + 1) % 25 === 0) {
+          await new Promise((r) => setTimeout(r, 1000));
         }
       }
 
-      // Rate limiting — Telegram allows ~30 messages/second
-      if ((i + 1) % 25 === 0) {
-        await new Promise((r) => setTimeout(r, 1000));
-      }
+      await ctx.reply(messages.broadcastCompleteMessage(sent, failed), {
+        parse_mode: "HTML",
+      });
+    } catch (err) {
+      await ctx.reply(`❌ Broadcast failed: ${err.message}`);
     }
-
-    // Final result
-    await ctx.reply(messages.broadcastCompleteMessage(sent, failed), {
-      parse_mode: "HTML",
-    });
   });
 
   // Callback: cancel broadcast
@@ -136,13 +147,13 @@ function registerAdminHandler(bot) {
       return;
     }
 
-    const user = queries.getUser(targetId);
+    const user = await queries.getUser(targetId);
     if (!user) {
       await ctx.reply("⚠️ User not found in database.");
       return;
     }
 
-    queries.banUser(targetId);
+    await queries.banUser(targetId);
     await ctx.reply(
       `🚫 <b>User banned:</b> ${targetId} (${user.first_name || "Unknown"})`,
       { parse_mode: "HTML" }
@@ -161,16 +172,13 @@ function registerAdminHandler(bot) {
       return;
     }
 
-    queries.unbanUser(targetId);
+    await queries.unbanUser(targetId);
     await ctx.reply(`✅ <b>User unbanned:</b> ${targetId}`, {
       parse_mode: "HTML",
     });
   });
 }
 
-/**
- * Check if a user ID is in the admin list.
- */
 function isAdmin(userId) {
   return config.adminIds.includes(userId);
 }

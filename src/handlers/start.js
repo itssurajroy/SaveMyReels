@@ -7,7 +7,7 @@ const messages = require("../utils/messages");
 const { parseReferralCode } = require("../utils/helpers");
 
 /**
- * Register the /start command handler with a visual welcome banner.
+ * Register the /start command handler.
  */
 function registerStartHandler(bot) {
   bot.command("start", async (ctx) => {
@@ -20,12 +20,12 @@ function registerStartHandler(bot) {
     const referrerId = parseReferralCode(payload);
 
     // Check if user is new
-    const existingUser = getUser(userId);
+    const existingUser = await getUser(userId);
     const isNewUser = !existingUser;
 
     if (isNewUser) {
       const validReferrer = referrerId && referrerId !== userId ? referrerId : null;
-      createUser(userId, username, firstName, validReferrer);
+      await createUser(userId, username, firstName, validReferrer);
 
       if (validReferrer) {
         try {
@@ -38,20 +38,19 @@ function registerStartHandler(bot) {
       }
     }
 
-    // Resolve welcome banner file path
     const bannerPath = path.join(__dirname, "../../assets/banner.png");
-    const welcomeText = isNewUser ? messages.welcomeMessage(firstName) : messages.welcomeBackMessage(firstName);
+    const welcomeText = isNewUser
+      ? messages.welcomeMessage(firstName)
+      : messages.welcomeBackMessage(firstName);
 
     try {
       if (fs.existsSync(bannerPath)) {
-        // Send banner with caption
         await ctx.replyWithPhoto(new InputFile(bannerPath), {
           caption: welcomeText,
           parse_mode: "HTML",
           reply_markup: mainMenuKeyboard(),
         });
       } else {
-        // Fallback to text message if banner file missing
         await ctx.reply(welcomeText, {
           parse_mode: "HTML",
           reply_markup: mainMenuKeyboard(),
@@ -59,7 +58,6 @@ function registerStartHandler(bot) {
       }
     } catch (err) {
       console.error("⚠️ Failed to send start banner:", err.message);
-      // Fallback
       await ctx.reply(welcomeText, {
         parse_mode: "HTML",
         reply_markup: mainMenuKeyboard(),
