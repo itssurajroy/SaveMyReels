@@ -295,6 +295,20 @@ async function getDownloadsByPlatform() {
   );
 }
 
+/**
+ * Add a diagnostic log entry.
+ */
+async function addLog(message) {
+  await execute("INSERT INTO logs (message) VALUES ($1)", [message]);
+}
+
+/**
+ * Get the latest 50 diagnostic logs.
+ */
+async function getLogs() {
+  return queryAll("SELECT message, created_at FROM logs ORDER BY created_at DESC LIMIT 50");
+}
+
 module.exports = {
   createUser,
   getUser,
@@ -319,4 +333,6 @@ module.exports = {
   getPremiumUserCount,
   getAllUserIds,
   getDownloadsByPlatform,
+  addLog,
+  getLogs,
 };

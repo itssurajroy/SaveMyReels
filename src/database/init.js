@@ -54,6 +54,15 @@ async function initDatabase() {
       )
     `);
 
+    // Create logs table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id SERIAL PRIMARY KEY,
+        message TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes if they do not exist
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_downloads_user_date ON downloads(user_id, downloaded_at)`

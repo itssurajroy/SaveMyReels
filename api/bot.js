@@ -90,6 +90,11 @@ module.exports = async (req, res) => {
       dbInitialized = true;
     }
 
+    const queries = require("../src/database/queries");
+    
+    // Log incoming update payload
+    await queries.addLog(`[INCOMING] ${req.method} ${req.url} - Body: ${JSON.stringify(req.body || {})}`);
+
     // 2. Cache bot info on first request
     await bot.init();
 
@@ -97,6 +102,10 @@ module.exports = async (req, res) => {
     return await handleWebhook(req, res);
   } catch (err) {
     console.error("❌ Vercel Webhook error:", err.message);
+    try {
+      const queries = require("../src/database/queries");
+      await queries.addLog(`[ERROR] ${err.message}\nStack: ${err.stack}`);
+    } catch {}
     res.status(500).json({ error: err.message });
   }
 };

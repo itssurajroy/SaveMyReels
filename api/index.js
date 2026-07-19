@@ -114,5 +114,16 @@ app.post("/api/settings/:id", async (req, res) => {
   }
 });
 
+// View debug logs
+app.get("/api/debug-logs", async (req, res) => {
+  try {
+    await ensureDbConnected();
+    const logs = await queries.getLogs();
+    res.json({ success: true, count: logs.length, logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Export Express App for Vercel Serverless Function
 module.exports = app;
