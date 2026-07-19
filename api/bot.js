@@ -91,9 +91,7 @@ module.exports = async (req, res) => {
     }
 
     // 2. Cache bot info on first request
-    if (!bot.botInfo) {
-      await bot.init();
-    }
+    await bot.init();
 
     // 3. Process webhook update
     return await handleWebhook(req, res);
