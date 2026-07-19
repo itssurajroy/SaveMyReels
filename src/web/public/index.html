@@ -177,15 +177,67 @@
       font-size: 1.3rem;
       color: #9ca3af;
       max-width: 750px;
-      margin: 0 auto 3rem auto;
+      margin: 0 auto 2rem auto;
       font-weight: 300;
     }
 
     .cta-group {
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 5rem;
+    }
+
+    .cta-buttons {
+      display: flex;
       justify-content: center;
       gap: 1.25rem;
-      margin-bottom: 5rem;
+    }
+
+    .cta-reassurance {
+      font-size: 0.85rem;
+      color: #6b7280;
+      font-weight: 400;
+    }
+
+    .sample-links-box {
+      margin-top: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sample-title {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    .sample-links {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.8rem;
+    }
+
+    .sample-links a {
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .sample-links a:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
 
     /* Features Grid */
@@ -625,14 +677,20 @@
       .hero-title {
         font-size: 3rem;
       }
-      .cta-group {
+      .cta-buttons {
         flex-direction: column;
         align-items: center;
+        width: 100%;
       }
       .btn {
         width: 100%;
         max-width: 350px;
         justify-content: center;
+      }
+      .sample-links {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
       }
       .guidelines-card {
         grid-template-columns: 1fr;
@@ -668,8 +726,21 @@
       <p class="hero-subtitle">A fast, convenient Telegram utility for saving public short-form videos from Instagram, TikTok, and YouTube. Sponsor-supported free downloads, ad-free premium.</p>
       
       <div class="cta-group">
-        <a href="https://t.me/savemyreeelsbot" class="btn btn-primary">🎬 Start Downloading Free</a>
-        <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+        <div class="cta-buttons">
+          <a href="https://t.me/savemyreeelsbot" class="btn btn-primary">🎬 Start Downloading Free</a>
+          <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+        </div>
+        <div class="cta-reassurance">Works with public links only &bull; Opens instantly inside Telegram</div>
+        
+        <!-- Copyable Sample Links Box -->
+        <div class="sample-links-box">
+          <div class="sample-title">Try it out with these sample links:</div>
+          <div class="sample-links">
+            <a onclick="navigator.clipboard.writeText('https://www.instagram.com/reel/C3_kM-3s5iO/'); alert('Instagram link copied!')">📸 Copy Instagram Reel</a>
+            <a onclick="navigator.clipboard.writeText('https://www.youtube.com/shorts/3d_aL8N9wGg'); alert('YouTube Short link copied!')">▶️ Copy YouTube Short</a>
+            <a onclick="navigator.clipboard.writeText('https://www.tiktok.com/@khaby.lame/video/7342890104'); alert('TikTok link copied!')">🎵 Copy TikTok Video</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -693,7 +764,7 @@
       <div class="feature-item">
         <span>🎵</span>
         <h3>Clean Media Output</h3>
-        <p>Saves public social media clips in watermark-free MP4 formats.</p>
+        <p>Saves public social media clips in clean MP4 formats (watermark-free where supported).</p>
       </div>
     </section>
 
@@ -725,7 +796,7 @@
           <div class="step-badge">03</div>
           <span class="step-icon">📥</span>
           <h3>Get HD Video</h3>
-          <p>The bot immediately delivers a clean, watermark-free video file to your chat.</p>
+          <p>The bot immediately delivers the video file to your chat.</p>
           <div class="step-example">Exported in HD MP4 format</div>
         </div>
       </div>
@@ -738,7 +809,7 @@
         <ul>
           <li>• Public Instagram Reels, Posts & Video uploads</li>
           <li>• Public YouTube Shorts & standard video clips</li>
-          <li>• Public TikTok videos (watermark-free)</li>
+          <li>• Public TikTok videos (watermark-free where supported)</li>
           <li>• Carousel slide posts (first slide resolved)</li>
         </ul>
       </div>
@@ -846,12 +917,12 @@
 
         <div class="faq-item">
           <div class="faq-question">Are the downloaded videos watermark-free?</div>
-          <div class="faq-answer">Yes. All public downloads are fetched directly from source links, meaning you receive original files without overlay icons or watermarks (especially for TikTok).</div>
+          <div class="faq-answer">Yes. All public downloads are fetched directly from source links, meaning you receive processed files without overlay watermarks (where supported by the source network).</div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">Do you store my downloaded videos on your servers?</div>
-          <div class="faq-answer">No. We care about privacy. The video files are temporarily processed via our API to create a direct link, and are immediately deleted. We do not maintain any storage or logs of actual video payloads.</div>
+          <div class="faq-answer">No. We care about privacy. The video files are temporarily processed via our API to create a direct link, and are cached temporarily and regularly cleaned up to ensure privacy. We do not maintain any permanent logs or storage of actual video payloads.</div>
         </div>
 
         <div class="faq-item">
