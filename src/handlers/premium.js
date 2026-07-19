@@ -1,0 +1,116 @@
+const config = require("../config");
+const { isPremiumActive, getPremiumExpiry, activatePremium } = require("../database/queries");
+const { premiumKeyboard, backKeyboard } = require("../utils/keyboards");
+const messages = require("../utils/messages");
+
+/**
+ * Register premium-related handlers.
+ */
+function registerPremiumHandler(bot) {
+  // /premium command
+  bot.command("premium", async (ctx) => {
+    await showPremiumInfo(ctx);
+  });
+
+  // Callback: premium_info button
+  bot.callbackQuery("premium_info", async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await showPremiumInfo(ctx);
+  });
+
+  // Callback: buy_premium button — send Telegram Stars invoice
+  bot.callbackQuery("buy_premium", async (ctx) => {
+    await ctx.answerCallbackQuery();
+
+    const userId = ctx.from.id;
+
+    // Check if already premium
+    if (isPremiumActive(userId)) {
+      const expiry = getPremiumExpiry(userId);
+      const expiryDate = expiry
+        ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : "Unknown";
+      await ctx.reply(messages.alreadyPremiumMessage(expiryDate), {
+        parse_mode: "HTML",
+      });
+      return;
+    }
+
+    // Send Telegram Stars invoice
+    await ctx.replyWithInvoice(
+      "⭐ SaveMyReels Premium",
+      "Unlimited downloads for 30 days across Instagram, YouTube & TikTok!",
+      "premium_30d", // payload
+      "XTR", // Telegram Stars currency code
+      [{ label: "Premium (30 days)", amount: config.premiumPriceStars }]
+    );
+  });
+
+  // Handle pre-checkout query (must answer within 10 seconds)
+  bot.on("pre_checkout_query", async (ctx) => {
+    await ctx.answerPreCheckoutQuery(true);
+  });
+
+  // Handle successful payment
+  bot.on("message:successful_payment", async (ctx) => {
+    const userId = ctx.from.id;
+    const payment = ctx.message.successful_payment;
+
+    if (payment.invoice_payload === "premium_30d") {
+      // Activate premium for 30 days
+      activatePremium(userId, config.premiumDurationDays);
+
+      const expiry = getPremiumExpiry(userId);
+      const expiryDate = expiry
+        ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : "30 days from now";
+
+      await ctx.reply(messages.premiumActivatedMessage(expiryDate), {
+        parse_mode: "HTML",
+      });
+
+      console.log(
+        `💎 Premium activated for user ${userId} (${ctx.from.username || "no username"})`
+      );
+    }
+  });
+}
+
+/**
+ * Show premium info message.
+ */
+async function showPremiumInfo(ctx) {
+  const userId = ctx.from.id;
+
+  // Check if already premium
+  if (isPremiumActive(userId)) {
+    const expiry = getPremiumExpiry(userId);
+    const expiryDate = expiry
+      ? new Date(expiry + "Z").toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "Unknown";
+    await ctx.reply(messages.alreadyPremiumMessage(expiryDate), {
+      parse_mode: "HTML",
+      reply_markup: backKeyboard(),
+    });
+    return;
+  }
+
+  await ctx.reply(messages.premiumInfoMessage(config.premiumPriceStars), {
+    parse_mode: "HTML",
+    reply_markup: premiumKeyboard(),
+  });
+}
+
+module.exports = { registerPremiumHandler };

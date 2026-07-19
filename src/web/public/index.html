@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaveMyReels — Premium Video Downloader Service</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --text-color: #f3f4f6;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #d946ef;
+      --glass-bg: rgba(17, 24, 39, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Ambient background glows */
+    .glow-1 {
+      position: absolute;
+      top: -10%;
+      left: 10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
+      filter: blur(50px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .glow-2 {
+      position: absolute;
+      top: 50%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(217, 70, 239, 0.1) 0%, rgba(0,0,0,0) 70%);
+      filter: blur(60px);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 5%;
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      background: rgba(11, 15, 25, 0.8);
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text {
+      font-family: var(--font-title);
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    main {
+      padding: 5rem 5% 2rem 5%;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: var(--font-title);
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      letter-spacing: -1.5px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: #9ca3af;
+      max-width: 700px;
+      margin: 0 auto 3rem auto;
+      font-weight: 300;
+    }
+
+    .cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 5rem;
+    }
+
+    /* Stats Grid */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .stat-num {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      color: #9ca3af;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* Features Grid */
+    .features-section {
+      margin-top: 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 3rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      text-align: left;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(217, 70, 239, 0.3);
+      transform: translateY(-5px);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card p {
+      color: #9ca3af;
+      font-size: 1rem;
+      font-weight: 300;
+    }
+
+    footer {
+      border-top: 1px solid var(--glass-border);
+      padding: 2rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #6b7280;
+      font-size: 0.9rem;
+      background: rgba(11, 15, 25, 0.9);
+      margin-top: 5rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2.75rem;
+      }
+      .cta-group {
+        flex-direction: column;
+        align-items: center;
+      }
+      .btn {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+      }
+      footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
+
+  <header>
+    <div class="logo-container">
+      <span class="logo-icon">🎬</span>
+      <span class="logo-text">SaveMyReels</span>
+    </div>
+    <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">Open Telegram</a>
+  </header>
+
+  <main>
+    <h1 class="hero-title">Download Social Media Videos <span>Instantly</span></h1>
+    <p class="hero-subtitle">The ultimate Telegram SaaS bot to download Instagram Reels, YouTube Shorts, and TikTok videos at lightning speed. No advertisements, no limits, pure download speed.</p>
+    
+    <div class="cta-group">
+      <a href="https://t.me/savemyreeelsbot" class="btn btn-primary">🎬 Start Downloading Free</a>
+      <a href="#features" class="btn btn-secondary">Explore Features</a>
+    </div>
+
+    <!-- Live SaaS Statistics -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-downloads">0</div>
+        <div class="stat-label">Total Downloads</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-users">0</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-active">0</div>
+        <div class="stat-label">Active Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-premium">0</div>
+        <div class="stat-label">Premium Users</div>
+      </div>
+    </div>
+
+    <section id="features" class="features-section">
+      <h2 class="section-title">Why Choose SaveMyReels?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Lightning Fast</h3>
+          <p>Powered by raw performance nodes to fetch and deliver files in seconds. Say goodbye to lagging web portals.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Built-in SaaS Loop</h3>
+          <p>Upgrade to Pro instantly using Telegram Stars. Refer friends using your viral invite code to get bonus downloads.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎥</div>
+          <h3>Multi-Platform</h3>
+          <p>Instagram Reels, YouTube Shorts, and TikTok are all supported out-of-the-box in HD quality.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>&copy; 2026 SaveMyReels. All rights reserved.</div>
+    <div>Sleek glass design powered by pure code.</div>
+  </footer>
+
+  <script>
+    // Fetch live statistics
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.success) {
+          const stats = data.stats;
+          document.getElementById('stat-downloads').innerText = Number(stats.totalDownloads).toLocaleString();
+          document.getElementById('stat-users').innerText = Number(stats.totalUsers).toLocaleString();
+          document.getElementById('stat-active').innerText = Number(stats.activeToday).toLocaleString();
+          document.getElementById('stat-premium').innerText = Number(stats.premiumUsers).toLocaleString();
+        }
+      } catch (err) {
+        console.error("Failed to load statistics:", err);
+      }
+    }
+
+    fetchStats();
+    // Auto-update statistics every 10 seconds
+    setInterval(fetchStats, 10000);
+  </script>
+</body>
+</html>
