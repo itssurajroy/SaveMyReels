@@ -211,8 +211,10 @@ async function getDailyLimit(userId) {
     [userId]
   );
   const referralCount = user ? user.referral_count : 0;
+  const calculatedBonus = referralCount * config.referralBonus;
+  const cappedBonus = Math.min(calculatedBonus, config.maxReferralBonusLimit);
 
-  return config.dailyFreeLimit + referralCount * config.referralBonus;
+  return config.dailyFreeLimit + cappedBonus;
 }
 
 /**

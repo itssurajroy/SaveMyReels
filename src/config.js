@@ -19,6 +19,7 @@ const config = {
   // Rate limits
   dailyFreeLimit: parseInt(process.env.DAILY_FREE_LIMIT, 10) || 5,
   referralBonus: parseInt(process.env.REFERRAL_BONUS, 10) || 3,
+  maxReferralBonusLimit: parseInt(process.env.MAX_REFERRAL_BONUS_LIMIT, 10) || 30,
 
   // Premium
   premiumPriceStars: parseInt(process.env.PREMIUM_PRICE_STARS, 10) || 50,
