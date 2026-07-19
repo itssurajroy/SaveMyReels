@@ -125,5 +125,14 @@ app.get("/api/debug-logs", async (req, res) => {
   }
 });
 
+// Serve Privacy & Terms Policy pages
+app.get("/privacy", (req, res) => {
+  res.sendFile(path.join(__dirname, "../src/web/public/privacy.html"));
+});
+
+app.get("/terms", (req, res) => {
+  res.sendFile(path.join(__dirname, "../src/web/public/terms.html"));
+});
+
 // Export Express App for Vercel Serverless Function
 module.exports = app;

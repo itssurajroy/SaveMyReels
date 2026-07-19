@@ -5,6 +5,7 @@
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/app", "destination": "/src/web/public/app.html" },
     { "source": "/privacy", "destination": "/src/web/public/privacy.html" },
+    { "source": "/terms", "destination": "/src/web/public/terms.html" },
     { "source": "/(.*)", "destination": "/src/web/public/$1" }
   ]
 }

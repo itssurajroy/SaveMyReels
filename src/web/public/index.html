@@ -188,12 +188,12 @@
       margin-bottom: 5rem;
     }
 
-    /* Stats Banner */
-    .stats-banner {
+    /* Features Grid (Replaced Numeric Stats Banner) */
+    .features-banner {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       border-radius: 28px;
-      padding: 2rem;
+      padding: 2.5rem;
       backdrop-filter: blur(12px);
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -202,20 +202,24 @@
       margin-bottom: 6rem;
     }
 
-    .stat-card h3 {
+    .feature-item span {
+      font-size: 2.25rem;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .feature-item h3 {
       font-family: var(--font-title);
-      font-size: 2.75rem;
-      font-weight: 800;
+      font-size: 1.15rem;
+      font-weight: 700;
       margin-bottom: 0.25rem;
       color: white;
     }
 
-    .stat-card p {
+    .feature-item p {
       color: #9ca3af;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      font-weight: 600;
+      font-size: 0.8rem;
+      font-weight: 300;
     }
 
     /* Section Heading Styles */
@@ -243,6 +247,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 2rem;
+      margin-bottom: 3rem;
     }
 
     .step-card {
@@ -302,12 +307,51 @@
       word-break: break-all;
     }
 
+    /* Guidelines Cards (Supported vs Unsupported) */
+    .guidelines-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      margin-bottom: 6rem;
+    }
+
+    .guideline-col h3 {
+      font-family: var(--font-title);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .guideline-col h3.yes { color: #10b981; }
+    .guideline-col h3.no { color: #ef4444; }
+
+    .guideline-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .guideline-col li {
+      font-size: 0.9rem;
+      color: #d1d5db;
+      font-weight: 300;
+    }
+
     /* Pricing Section */
     .pricing-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 450px));
       gap: 2.5rem;
       justify-content: center;
+      margin-bottom: 6rem;
     }
 
     .pricing-card {
@@ -399,6 +443,41 @@
       width: 100%;
       justify-content: center;
       padding: 0.9rem;
+    }
+
+    /* Built For Section */
+    .built-for-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 6rem;
+    }
+
+    .built-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.25rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .built-card span {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .built-card h3 {
+      font-family: var(--font-title);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .built-card p {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      font-weight: 300;
     }
 
     /* FAQ Section */
@@ -550,6 +629,10 @@
         max-width: 350px;
         justify-content: center;
       }
+      .guidelines-card {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
       .footer-content {
         flex-direction: column;
       }
@@ -585,28 +668,32 @@
       </div>
     </section>
 
-    <!-- Live Stats -->
-    <section class="stats-banner">
-      <div class="stat-card">
-        <h3 id="stat-downloads">0</h3>
-        <p>Downloads Processed</p>
+    <!-- Features & Trust Grid (Replaced Numeric Stats Banner) -->
+    <section class="features-banner">
+      <div class="feature-item">
+        <span>👤</span>
+        <h3>No Account Signup</h3>
+        <p>Start downloading instantly directly inside Telegram without registrations.</p>
       </div>
-      <div class="stat-card">
-        <h3 id="stat-users">0</h3>
-        <p>Total Users</p>
+      <div class="feature-item">
+        <span>🔒</span>
+        <h3>Secure SSL Processing</h3>
+        <p>Your connections and video source requests are 100% private & encrypted.</p>
       </div>
-      <div class="stat-card">
-        <h3 id="stat-active">0</h3>
-        <p>Active Today</p>
+      <div class="feature-item">
+        <span>⚡</span>
+        <h3>Fast CDN Delivery</h3>
+        <p>Videos are processed and sent to your chat in original quality without lag.</p>
       </div>
-      <div class="stat-card">
-        <h3 id="stat-premium">0</h3>
-        <p>Pro Members</p>
+      <div class="feature-item">
+        <span>🎵</span>
+        <h3>Clean Media Output</h3>
+        <p>Saves public social media clips in watermark-free MP4 formats.</p>
       </div>
     </section>
 
     <!-- How It Works Section -->
-    <section id="how-it-works" style="margin-bottom: 6rem;">
+    <section id="how-it-works" style="margin-bottom: 2rem;">
       <div class="section-header">
         <h2>How It Works</h2>
         <p>Save any short video in 3 simple steps</p>
@@ -636,6 +723,28 @@
           <p>The bot immediately delivers a clean, watermark-free video file to your chat.</p>
           <div class="step-example">Exported in HD MP4 format</div>
         </div>
+      </div>
+    </section>
+
+    <!-- Guidelines Card (Supported vs Unsupported rules) -->
+    <section class="guidelines-card">
+      <div class="guideline-col">
+        <h3 class="yes">✓ Supported Formats</h3>
+        <ul>
+          <li>• Public Instagram Reels, Posts & Video uploads</li>
+          <li>• Public YouTube Shorts & standard video clips</li>
+          <li>• Public TikTok videos (watermark-free)</li>
+          <li>• Carousel slide posts (first slide resolved)</li>
+        </ul>
+      </div>
+      <div class="guideline-col">
+        <h3 class="no">✗ Not Supported</h3>
+        <ul>
+          <li>• Private user accounts (requires profile permission)</li>
+          <li>• Age-restricted or country-blocked content</li>
+          <li>• Live streams or videos longer than 10 minutes</li>
+          <li>• Audio files requiring digital rights ownership (DRM)</li>
+        </ul>
       </div>
     </section>
 
@@ -680,6 +789,32 @@
             <li>No ads or sponsorships</li>
           </ul>
           <a href="https://t.me/savemyreeelsbot?start=premium" class="btn btn-primary">Upgrade Now</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Built For Section (Added Trust / Audience Warm-up block) -->
+    <section id="built-for" style="margin-bottom: 6rem;">
+      <div class="section-header">
+        <h2>Built For Speed & Utility</h2>
+        <p>Helping different users save content effortlessly every day</p>
+      </div>
+      
+      <div class="built-for-grid">
+        <div class="built-card">
+          <span>🎬</span>
+          <h3>Content Creators</h3>
+          <p>Collect public references, study viral reels, and gather templates to build your social media presence without watermark limitations.</p>
+        </div>
+        <div class="built-card">
+          <span>📚</span>
+          <h3>Students & Researchers</h3>
+          <p>Archive educational shorts, public guides, and informative tutorials directly to your device for offline study and presentations.</p>
+        </div>
+        <div class="built-card">
+          <span>💬</span>
+          <h3>Casual Savers</h3>
+          <p>Save viral clips and funny memes directly to your camera roll, ready to share with friends on WhatsApp, Telegram, or group chats.</p>
         </div>
       </div>
     </section>
@@ -748,6 +883,7 @@
           <h4>Legal</h4>
           <ul>
             <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms & Refund Policy</a></li>
           </ul>
         </div>
       </div>
@@ -772,26 +908,6 @@
         item.classList.toggle('open');
       });
     });
-
-    // Fetch live statistics
-    async function fetchStats() {
-      try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-        if (data.success) {
-          const stats = data.stats;
-          document.getElementById('stat-downloads').innerText = Number(stats.totalDownloads).toLocaleString();
-          document.getElementById('stat-users').innerText = Number(stats.totalUsers).toLocaleString();
-          document.getElementById('stat-active').innerText = Number(stats.activeToday).toLocaleString();
-          document.getElementById('stat-premium').innerText = Number(stats.premiumUsers).toLocaleString();
-        }
-      } catch (err) {
-        console.error("Failed to load statistics:", err);
-      }
-    }
-
-    fetchStats();
-    setInterval(fetchStats, 15000);
   </script>
 </body>
 </html>
