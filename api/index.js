@@ -30,7 +30,8 @@ app.get("/api/stats", async (req, res) => {
       activeToday: await queries.getActiveUsersToday(),
       premiumUsers: await queries.getPremiumUserCount(),
     };
-    res.json({ success: true, stats });
+    const funnel = await queries.getFunnelStats();
+    res.json({ success: true, stats, funnel });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

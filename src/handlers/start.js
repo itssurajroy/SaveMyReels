@@ -23,11 +23,19 @@ function registerStartHandler(bot) {
     const existingUser = await getUser(userId);
     const isNewUser = !existingUser;
 
+    const { trackEvent } = require("../database/queries");
+    
+    // Log bot start event
+    await trackEvent(userId, "bot_start", { is_new: isNewUser });
+
     if (isNewUser) {
       const validReferrer = referrerId && referrerId !== userId ? referrerId : null;
       await createUser(userId, username, firstName, validReferrer);
 
       if (validReferrer) {
+        // Log referral click conversion event
+        await trackEvent(userId, "referral_click", { referrer_id: validReferrer });
+        
         try {
           await ctx.api.sendMessage(
             validReferrer,

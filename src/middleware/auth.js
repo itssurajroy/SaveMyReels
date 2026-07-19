@@ -60,6 +60,9 @@ function authMiddleware() {
           });
         }
 
+        const { trackEvent } = require("../database/queries");
+        await trackEvent(userId, "join_wall_shown", { missing: notJoinedChannels });
+
         await ctx.reply(messages.joinChannelsMessage(notJoinedChannels), {
           parse_mode: "HTML",
           reply_markup: joinChannelsKeyboard(channels),

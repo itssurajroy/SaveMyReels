@@ -303,10 +303,65 @@ async function addLog(message) {
 }
 
 /**
- * Get the latest 50 diagnostic logs.
+ * Add the latest 50 diagnostic logs.
  */
 async function getLogs() {
   return queryAll("SELECT message, created_at FROM logs ORDER BY created_at DESC LIMIT 50");
+}
+
+/**
+ * Track an analytics funnel event.
+ */
+async function trackEvent(userId, eventType, metadata = {}) {
+  await execute(
+    "INSERT INTO funnel_events (user_id, event_type, metadata) VALUES ($1, $2, $3)",
+    [userId, eventType, JSON.stringify(metadata)]
+  );
+}
+
+/**
+ * Compute aggregate conversion funnel stats.
+ */
+async function getFunnelStats() {
+  // Counts by event types
+  const startsRow = await queryOne("SELECT COUNT(*) as count FROM funnel_events WHERE event_type = 'bot_start'");
+  const wallShownRow = await queryOne("SELECT COUNT(*) as count FROM funnel_events WHERE event_type = 'join_wall_shown'");
+  const wallPassedRow = await queryOne("SELECT COUNT(*) as count FROM funnel_events WHERE event_type = 'join_wall_passed'");
+  const limitRow = await queryOne("SELECT COUNT(*) as count FROM funnel_events WHERE event_type = 'limit_reached'");
+  const refRow = await queryOne("SELECT COUNT(*) as count FROM funnel_events WHERE event_type = 'referral_click'");
+  const totalUsersRow = await queryOne("SELECT COUNT(*) as count FROM users");
+
+  const botStarts = startsRow ? parseInt(startsRow.count, 10) : 0;
+  const joinWallShown = wallShownRow ? parseInt(wallShownRow.count, 10) : 0;
+  const joinWallPassed = wallPassedRow ? parseInt(wallPassedRow.count, 10) : 0;
+  const limitReached = limitRow ? parseInt(limitRow.count, 10) : 0;
+  const referralClicks = refRow ? parseInt(refRow.count, 10) : 0;
+  const totalUsers = totalUsersRow ? parseInt(totalUsersRow.count, 10) : 0;
+
+  // Conversion calculations
+  const joinConversionRate = joinWallShown > 0 
+    ? Math.round((joinWallPassed / joinWallShown) * 100) 
+    : 0;
+
+  const limitHitRate = botStarts > 0 
+    ? Math.round((limitReached / botStarts) * 100) 
+    : 0;
+
+  // Simple Viral K-Factor calculation: referred users signup / total users
+  const kFactor = totalUsers > 0 
+    ? parseFloat((referralClicks / totalUsers).toFixed(2)) 
+    : 0.0;
+
+  return {
+    botStarts,
+    joinWallShown,
+    joinWallPassed,
+    joinConversionRate,
+    limitReached,
+    limitHitRate,
+    referralClicks,
+    kFactor
+  };
 }
 
 module.exports = {
@@ -335,4 +390,6 @@ module.exports = {
   getDownloadsByPlatform,
   addLog,
   getLogs,
+  trackEvent,
+  getFunnelStats,
 };

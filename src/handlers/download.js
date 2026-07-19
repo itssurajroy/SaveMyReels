@@ -37,6 +37,9 @@ function registerDownloadHandler(bot) {
     // Check rate limit (must await since queries are async now!)
     const rateLimit = await checkRateLimit(userId);
     if (!rateLimit.allowed) {
+      const { trackEvent } = require("../database/queries");
+      await trackEvent(userId, "limit_reached", { limit: rateLimit.limit });
+
       await ctx.reply(messages.limitReachedMessage(rateLimit.limit), {
         parse_mode: "HTML",
         reply_markup: limitReachedKeyboard(),

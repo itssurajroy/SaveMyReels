@@ -63,9 +63,23 @@ async function initDatabase() {
       )
     `);
 
+    // Create funnel_events table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS funnel_events (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT,
+        event_type VARCHAR(50) NOT NULL,
+        metadata JSONB DEFAULT '{}'::jsonb,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes if they do not exist
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_downloads_user_date ON downloads(user_id, downloaded_at)`
+    );
+    await client.query(
+      `CREATE INDEX IF NOT EXISTS idx_funnel_events_type ON funnel_events(event_type)`
     );
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_users_referred_by ON users(referred_by)`

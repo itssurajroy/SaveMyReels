@@ -48,6 +48,9 @@ bot.callbackQuery("verify_join", async (ctx) => {
   const { allJoined, channels } = await checkChannelMembership(ctx.api, userId);
 
   if (allJoined) {
+    const { trackEvent } = require("../src/database/queries");
+    await trackEvent(userId, "join_wall_passed");
+
     await ctx.answerCallbackQuery({ text: "✅ Verified!" });
     await ctx.editMessageText(messages.channelVerifiedMessage(), {
       parse_mode: "HTML",
