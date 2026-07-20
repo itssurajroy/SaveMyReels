@@ -35,6 +35,10 @@ const config = {
 
   // Web App
   webappUrl: process.env.WEBAPP_URL || "",
+
+  // Cuelinks Affiliate
+  cuelinksApiKey: process.env.CUELINKS_API_KEY || "",
+  cuelinksPubId: process.env.CUELINKS_PUB_ID || "",
 };
 
 // Validate required config
