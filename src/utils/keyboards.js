@@ -32,7 +32,10 @@ function joinChannelsKeyboard(channels) {
 
   for (const ch of channels) {
     if (!ch.joined) {
-      kb.url(`📢 Join ${ch.username}`, `https://t.me/${ch.username.replace("@", "")}`);
+      const url = ch.username.startsWith("http")
+        ? ch.username
+        : `https://t.me/${ch.username.replace("@", "")}`;
+      kb.url(`📢 Join Channel`, url);
       kb.row();
     }
   }

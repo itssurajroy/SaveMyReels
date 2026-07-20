@@ -366,6 +366,34 @@ async function getFunnelStats() {
   };
 }
 
+/**
+ * Retrieve session data for a user.
+ */
+async function getSession(userId) {
+  const row = await queryOne("SELECT session_data FROM sessions WHERE user_id = $1", [userId]);
+  return row ? row.session_data : null;
+}
+
+/**
+ * Save session data for a user.
+ */
+async function saveSession(userId, sessionData) {
+  await execute(
+    `INSERT INTO sessions (user_id, session_data, updated_at)
+     VALUES ($1, $2, CURRENT_TIMESTAMP)
+     ON CONFLICT (user_id)
+     DO UPDATE SET session_data = EXCLUDED.session_data, updated_at = CURRENT_TIMESTAMP`,
+    [userId, JSON.stringify(sessionData)]
+  );
+}
+
+/**
+ * Clear session data for a user.
+ */
+async function clearSession(userId) {
+  await execute("DELETE FROM sessions WHERE user_id = $1", [userId]);
+}
+
 module.exports = {
   createUser,
   getUser,
@@ -394,4 +422,7 @@ module.exports = {
   getLogs,
   trackEvent,
   getFunnelStats,
+  getSession,
+  saveSession,
+  clearSession,
 };

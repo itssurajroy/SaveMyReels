@@ -18,7 +18,12 @@ const {
  */
 function registerDownloadHandler(bot) {
   // Listen for text messages with URLs
-  bot.on("message:text", async (ctx) => {
+  bot.on("message:text", async (ctx, next) => {
+    // Bypass if in the middle of a wizard flow
+    if (ctx.session && ctx.session.step) {
+      return next();
+    }
+
     const text = ctx.message.text;
 
     if (text.startsWith("/")) return;

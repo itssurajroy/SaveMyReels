@@ -74,6 +74,15 @@ async function initDatabase() {
       )
     `);
 
+    // Create sessions table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sessions (
+        user_id BIGINT PRIMARY KEY,
+        session_data JSONB DEFAULT '{}'::jsonb,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Create indexes if they do not exist
     await client.query(
       `CREATE INDEX IF NOT EXISTS idx_downloads_user_date ON downloads(user_id, downloaded_at)`

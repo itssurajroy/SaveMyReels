@@ -1,4 +1,4 @@
-const { createUser, getUser, updateUserInfo } = require("../database/queries");
+const { createUser, getUser, updateUserInfo, getSession } = require("../database/queries");
 const { checkChannelMembership } = require("../services/channelCheck");
 const { joinChannelsKeyboard } = require("../utils/keyboards");
 const messages = require("../utils/messages");
@@ -25,6 +25,10 @@ function authMiddleware() {
     } else {
       await updateUserInfo(userId, username, firstName);
     }
+
+    // Load user session
+    const session = await getSession(userId);
+    ctx.session = session || {};
 
     // 2. Check if user is banned
     const user = await getUser(userId);

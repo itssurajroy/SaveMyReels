@@ -14,21 +14,26 @@ async function checkChannelMembership(bot, userId) {
   const channels = [];
   let allJoined = true;
 
-  for (const channelUsername of config.forceChannels) {
+  for (const channelEntry of config.forceChannels) {
+    // Support 'chatId#inviteUrl' format for private channels
+    const [channelId, inviteUrl] = channelEntry.split("#");
+    const identifier = channelId.trim();
+    const displayLink = inviteUrl ? inviteUrl.trim() : identifier;
+
     try {
-      const member = await bot.api.getChatMember(channelUsername, userId);
+      const member = await bot.api.getChatMember(identifier, userId);
       const joined = ["member", "administrator", "creator"].includes(
         member.status
       );
-      channels.push({ username: channelUsername, joined });
+      channels.push({ username: displayLink, joined });
       if (!joined) allJoined = false;
     } catch (error) {
       // If we can't check (bot not admin in channel), assume not joined
       console.error(
-        `⚠️ Cannot check membership for ${channelUsername}:`,
+        `⚠️ Cannot check membership for ${identifier}:`,
         error.message
       );
-      channels.push({ username: channelUsername, joined: false });
+      channels.push({ username: displayLink, joined: false });
       allJoined = false;
     }
   }
