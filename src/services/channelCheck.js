@@ -17,7 +17,13 @@ async function checkChannelMembership(bot, userId) {
   for (const channelEntry of config.forceChannels) {
     // Support 'chatId#inviteUrl' format for private channels
     const [channelId, inviteUrl] = channelEntry.split("#");
-    const identifier = channelId.trim();
+    let identifier = channelId.trim();
+    
+    // Auto-prepend @ for public channels if missing
+    if (!identifier.startsWith("-") && !identifier.startsWith("@")) {
+      identifier = "@" + identifier;
+    }
+
     const displayLink = inviteUrl ? inviteUrl.trim() : identifier;
 
     try {

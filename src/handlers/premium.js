@@ -89,9 +89,10 @@ function registerPremiumHandler(bot) {
  */
 async function showPremiumInfo(ctx) {
   const userId = ctx.from.id;
+  const isPremium = await isPremiumActive(userId);
 
-  // Check if already premium
-  if (await isPremiumActive(userId)) {
+  let text, replyMarkup;
+  if (isPremium) {
     const expiry = await getPremiumExpiry(userId);
     const expiryDate = expiry
       ? new Date(expiry).toLocaleDateString("en-IN", {
@@ -100,17 +101,32 @@ async function showPremiumInfo(ctx) {
           year: "numeric",
         })
       : "Unknown";
-    await ctx.reply(messages.alreadyPremiumMessage(expiryDate), {
-      parse_mode: "HTML",
-      reply_markup: backKeyboard(),
-    });
-    return;
+    text = messages.alreadyPremiumMessage(expiryDate);
+    replyMarkup = backKeyboard();
+  } else {
+    text = messages.premiumInfoMessage(config.premiumPriceStars);
+    replyMarkup = premiumKeyboard();
   }
 
-  await ctx.reply(messages.premiumInfoMessage(config.premiumPriceStars), {
-    parse_mode: "HTML",
-    reply_markup: premiumKeyboard(),
-  });
+  if (ctx.callbackQuery) {
+    try {
+      await ctx.editMessageText(text, {
+        parse_mode: "HTML",
+        reply_markup: replyMarkup,
+      });
+    } catch (err) {
+      // Fallback to sending new message if edit fails
+      await ctx.reply(text, {
+        parse_mode: "HTML",
+        reply_markup: replyMarkup,
+      });
+    }
+  } else {
+    await ctx.reply(text, {
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+    });
+  }
 }
 
 module.exports = { registerPremiumHandler };

@@ -37,10 +37,17 @@ registerInlineHandler(bot);
 bot.callbackQuery("back_to_menu", async (ctx) => {
   await ctx.answerCallbackQuery();
   const firstName = ctx.from.first_name || "User";
-  await ctx.reply(messages.welcomeBackMessage(firstName), {
-    parse_mode: "HTML",
-    reply_markup: mainMenuKeyboard(),
-  });
+  try {
+    await ctx.editMessageText(messages.welcomeBackMessage(firstName), {
+      parse_mode: "HTML",
+      reply_markup: mainMenuKeyboard(),
+    });
+  } catch (err) {
+    await ctx.reply(messages.welcomeBackMessage(firstName), {
+      parse_mode: "HTML",
+      reply_markup: mainMenuKeyboard(),
+    });
+  }
 });
 
 bot.callbackQuery("verify_join", async (ctx) => {

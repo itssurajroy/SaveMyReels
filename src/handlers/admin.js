@@ -87,7 +87,8 @@ function registerAdminHandler(bot) {
       return;
     }
 
-    const targetChannel = config.forceChannels[0];
+    const targetChannelEntry = config.forceChannels[0];
+    const targetChannel = targetChannelEntry.split("#")[0].trim();
     const session = ctx.session || {};
 
     if (session.step !== "preview") {

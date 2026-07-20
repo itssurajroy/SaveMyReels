@@ -30,18 +30,27 @@ async function showReferralInfo(ctx, bot) {
   const stats = await getReferralStats(userId);
   const totalLimit = await getDailyLimit(userId);
 
-  await ctx.reply(
-    messages.referralInfoMessage(
-      referralLink,
-      stats.count,
-      stats.bonusDownloads,
-      totalLimit
-    ),
-    {
-      parse_mode: "HTML",
-      reply_markup: backKeyboard(),
-    }
+  const text = messages.referralInfoMessage(
+    referralLink,
+    stats.count,
+    stats.bonusDownloads,
+    totalLimit
   );
+  const replyMarkup = backKeyboard();
+
+  if (ctx.callbackQuery) {
+    try {
+      await ctx.editMessageText(text, {
+        parse_mode: "HTML",
+        reply_markup: replyMarkup,
+      });
+    } catch (err) {}
+  } else {
+    await ctx.reply(text, {
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+    });
+  }
 }
 
 module.exports = { registerReferralHandler };

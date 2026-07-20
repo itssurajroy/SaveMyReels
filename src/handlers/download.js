@@ -63,9 +63,10 @@ function registerDownloadHandler(bot) {
 
     const startTime = Date.now();
 
+    let result = null;
     try {
       // Fetch the direct CDN URL from Cobalt API
-      const result = await downloadVideo(url, quality);
+      result = await downloadVideo(url, quality);
       
       // Update progress message - sending video
       await ctx.api.editMessageText(
@@ -74,7 +75,7 @@ function registerDownloadHandler(bot) {
         messages.uploadingMessage(),
         { parse_mode: "HTML" }
       );
-
+ 
       // Deliver video using direct CDN URL (Telegram downloads it directly)
       const botInfo = await bot.api.getMe();
       await ctx.replyWithVideo(result.filePath, {
@@ -87,18 +88,44 @@ function registerDownloadHandler(bot) {
         parse_mode: "HTML",
         reply_markup: postDownloadKeyboard(botInfo.username, url),
       });
-
+ 
       // Log download in cloud DB
       await logDownload(userId, url, platform);
-
+ 
       // Clean up progress message
       try {
         await ctx.api.deleteMessage(ctx.chat.id, progressMsg.message_id);
       } catch {}
     } catch (error) {
       console.error(`Download error for ${url}:`, error.message);
-      let errorMsg = messages.downloadErrorMessage();
+      
+      // Fallback if URL was successfully resolved but Telegram delivery failed
+      if (result && result.filePath) {
+        try {
+          const directText = `⚠️ <b>Delivery Notice</b>\n` +
+            `Telegram was unable to process the video for inline playback. You can download it directly:\n\n` +
+            `📥 <a href="${result.filePath}"><b>Direct Download Link</b></a>\n\n` +
+            `<i>(This link expires soon. Tap to open and save the media.)</i>`;
+          
+          await ctx.api.editMessageText(
+            ctx.chat.id,
+            progressMsg.message_id,
+            directText,
+            {
+              parse_mode: "HTML",
+              disable_web_page_preview: true
+            }
+          );
+          // Log download in cloud DB
+          await logDownload(userId, url, platform);
+          return;
+        } catch (fallbackErr) {
+          console.error("Fallback edit failed:", fallbackErr.message);
+        }
+      }
 
+      let errorMsg = messages.downloadErrorMessage();
+ 
       try {
         await ctx.api.editMessageText(
           ctx.chat.id,

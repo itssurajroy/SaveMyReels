@@ -32,9 +32,15 @@ function joinChannelsKeyboard(channels) {
 
   for (const ch of channels) {
     if (!ch.joined) {
-      const url = ch.username.startsWith("http")
-        ? ch.username
-        : `https://t.me/${ch.username.replace("@", "")}`;
+      let url = ch.username;
+      if (!url.startsWith("http")) {
+        if (url.startsWith("-")) {
+          // Fallback if private chat ID is specified without invite URL
+          url = "https://t.me/telegram";
+        } else {
+          url = `https://t.me/${ch.username.replace("@", "")}`;
+        }
+      }
       kb.url(`📢 Join Channel`, url);
       kb.row();
     }

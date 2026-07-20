@@ -16,10 +16,17 @@ function registerHelpHandler(bot) {
   // Callback: help button
   bot.callbackQuery("help", async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.reply(messages.helpMessage(), {
-      parse_mode: "HTML",
-      reply_markup: backKeyboard(),
-    });
+    try {
+      await ctx.editMessageText(messages.helpMessage(), {
+        parse_mode: "HTML",
+        reply_markup: backKeyboard(),
+      });
+    } catch {
+      await ctx.reply(messages.helpMessage(), {
+        parse_mode: "HTML",
+        reply_markup: backKeyboard(),
+      });
+    }
   });
 }
 

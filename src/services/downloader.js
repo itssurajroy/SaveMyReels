@@ -14,14 +14,16 @@ const config = require("../config");
 async function downloadVideo(url, quality = "hd") {
   const isSd = quality === "sd";
 
-  // Cobalt.tools API Request payload
+  // Cobalt.tools API Request payload (Supports both v6 and v7 parameter formats)
   const payload = {
     url: url,
     videoQuality: isSd ? "360" : "720", // Limit quality on free tier to prevent file size overflow
     audioFormat: "mp3",
     filenamePattern: "basic",
     isAudioOnly: false,
+    downloadMode: "video", // v7 parameter
     isNoTTWatermark: true,
+    removeWatermark: true, // v7 parameter
   };
 
   const cobaltInstances = [
