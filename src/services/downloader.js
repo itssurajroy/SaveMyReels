@@ -1,167 +1,162 @@
+const { spawn, execFile } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const config = require("../config");
 
+// Resolve local yt-dlp binary path if available
+const localYtdlpPath = path.join(__dirname, "../../bin/yt-dlp");
+const localYtdlpWinPath = path.join(__dirname, "../../bin/yt-dlp.exe");
+const ytdlpCmd = fs.existsSync(localYtdlpPath)
+  ? localYtdlpPath
+  : fs.existsSync(localYtdlpWinPath)
+  ? localYtdlpWinPath
+  : "yt-dlp";
+
 /**
- * Download / Resolve a video URL using the Cobalt.tools public API.
- * Bypasses need for local yt-dlp binaries on Vercel.
- * Returns the direct CDN URL so Telegram can download it directly.
- * 
+ * Download a video using yt-dlp with real-time progress callbacks.
  * @param {string} url - The video URL
  * @param {string} quality - 'hd' or 'sd'
- * @returns {Promise<{ filePath: string, title: string, fileSize: number, isDirectUrl: boolean }>}
+ * @param {Function} onProgress - Callback function: (percent, speed, eta) => {}
+ * @returns {Promise<{ filePath: string, title: string, fileSize: number }>}
  */
-let cachedInstances = null;
-let cacheTime = 0;
-
-/**
- * Get active community Cobalt instances for the target platform.
- * Fetches dynamic list from cobalt.directory to bypass Vercel/AWS IP blocking.
- */
-async function getWorkingInstances(platform = "instagram") {
-  const now = Date.now();
-  
-  // Cache for 10 minutes to prevent API spamming
-  if (cachedInstances && (now - cacheTime < 600000)) {
-    return cachedInstances[platform] || cachedInstances["instagram"] || [];
+async function downloadVideo(url, quality = "hd", onProgress = null) {
+  const downloadDir = path.join(__dirname, "../../downloads");
+  if (!fs.existsSync(downloadDir)) {
+    fs.mkdirSync(downloadDir, { recursive: true });
   }
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5s timeout
+  const outputTemplate = path.join(
+    downloadDir,
+    `%(id)s_${Date.now()}.%(ext)s`
+  );
 
-    const res = await fetch("https://cobalt.directory/api/working?type=api", {
-      signal: controller.signal,
-      headers: { "User-Agent": "SaveMyReelsBot/1.0" }
-    });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const body = await res.json();
-      if (body && body.data) {
-        cachedInstances = body.data;
-        cacheTime = now;
-        const list = cachedInstances[platform] || cachedInstances["instagram"] || [];
-        if (list.length > 0) return list;
-      }
-    }
-  } catch (err) {
-    console.warn("⚠️ Failed to fetch live Cobalt directory:", err.message);
-  }
-
-  // Robust static fallback list
-  return [
-    "https://rue-cobalt.xenon.zone",
-    "https://cobalt.omega.wolfy.love",
-    "https://nuko-c.meowing.de",
-    "https://api.cobalt.liubquanti.click",
-    "https://melon.clxxped.lol",
-    "https://grapefruit.clxxped.lol",
-    "https://cobalt.alpha.wolfy.love",
-    "https://lime.clxxped.lol",
-    "https://api-cobalt.eversiege.network",
-    "https://api.qwkuns.me"
+  const args = [
+    url,
+    "-o",
+    outputTemplate,
+    "--no-playlist",
+    "--no-warnings",
+    "--no-check-certificates",
+    "--max-filesize",
+    `${config.maxFileSizeMB}m`,
+    "--merge-output-format",
+    "mp4",
+    "--restrict-filenames",
+    "--newline", // Output progress details line by line
   ];
-}
 
-/**
- * Download / Resolve a video URL using the Cobalt.tools public API.
- * Bypasses need for local yt-dlp binaries on Vercel.
- * Returns the direct CDN URL so Telegram can download it directly.
- * 
- * @param {string} url - The video URL
- * @param {string} quality - 'hd' or 'sd'
- * @returns {Promise<{ filePath: string, title: string, fileSize: number, isDirectUrl: boolean }>}
- */
-async function downloadVideo(url, quality = "hd") {
-  const isSd = quality === "sd";
-
-  // Determine platform for optimized instance lookup
-  let platform = "instagram";
-  if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    platform = "youtube";
-  } else if (url.includes("tiktok.com")) {
-    platform = "tiktok";
+  if (quality === "sd") {
+    args.push("-f", "worst[ext=mp4]/worst");
+  } else {
+    args.push(
+      "-f",
+      "best[ext=mp4][filesize<50M]/best[ext=mp4]/best[filesize<50M]/best"
+    );
   }
 
-  // Fetch dynamic, working community mirrors
-  const instances = await getWorkingInstances(platform);
+  return new Promise((resolve, reject) => {
+    const process = spawn(ytdlpCmd, args);
+    let lastStdoutLine = "";
+    let errorOutput = "";
 
-  // Cobalt.tools API Request payload (Supports both v6 and v7 parameter formats)
-  const payload = {
-    url: url,
-    videoQuality: isSd ? "360" : "720", // Limit quality on free tier to prevent file size overflow
-    audioFormat: "mp3",
-    filenamePattern: "basic",
-    isAudioOnly: false,
-    downloadMode: "video", // v7 parameter
-    isNoTTWatermark: true,
-    removeWatermark: true, // v7 parameter
-  };
+    process.stdout.on("data", (data) => {
+      const output = data.toString();
+      const lines = output.split("\n");
 
-  let lastError = null;
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        lastStdoutLine = line;
 
-  for (const instance of instances) {
-    try {
-      const apiUrl = instance.endsWith("/api/json") ? instance : `${instance.replace(/\/$/, "")}/api/json`;
+        // Parse progress details (e.g., "[download]  35.2% of 12.44MiB at  2.12MiB/s ETA 00:03")
+        if (onProgress && line.includes("[download]") && line.includes("%")) {
+          const percentMatch = line.match(/(\d+\.\d+)%/);
+          const speedMatch = line.match(/at\s+(\S+\/s)/);
+          const etaMatch = line.match(/ETA\s+(\S+)/);
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "User-Agent": "SaveMyReelsBot/1.0",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Instance returned status ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === "error") {
-        throw new Error(data.text || "API returned error status");
-      }
-
-      // Cobalt returns status: "stream" or "redirect" with a direct url
-      if (data.url) {
-        return {
-          filePath: data.url,
-          title: data.filename || "video",
-          fileSize: 0,
-          isDirectUrl: true,
-        };
-      }
-
-      if (data.status === "picker") {
-        if (data.picker && data.picker.length > 0) {
-          const firstSlide = data.picker[0];
-          return {
-            filePath: firstSlide.url,
-            title: "slide_1",
-            fileSize: 0,
-            isDirectUrl: true,
-          };
+          if (percentMatch) {
+            const percent = parseFloat(percentMatch[1]);
+            const speed = speedMatch ? speedMatch[1] : "N/A";
+            const eta = etaMatch ? etaMatch[1] : "N/A";
+            onProgress(percent, speed, eta);
+          }
         }
       }
+    });
 
-      throw new Error("No stream URL returned in JSON response");
-    } catch (err) {
-      console.warn(`⚠️ Failed using Cobalt instance ${instance}:`, err.message);
-      lastError = err;
-    }
-  }
+    process.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
 
-  throw new Error(`DOWNLOAD_FAILED: ${lastError ? lastError.message : "All API instances failed"}`);
+    process.on("close", (code) => {
+      if (code !== 0) {
+        if (errorOutput.includes("Private") || errorOutput.includes("login")) {
+          return reject(new Error("PRIVATE_ACCOUNT"));
+        }
+        if (errorOutput.includes("not a valid URL") || errorOutput.includes("Unsupported URL")) {
+          return reject(new Error("INVALID_URL"));
+        }
+        if (errorOutput.includes("File is larger than max-filesize")) {
+          return reject(new Error("FILE_TOO_LARGE"));
+        }
+        if (errorOutput.includes("geo") || errorOutput.includes("not available")) {
+          return reject(new Error("GEO_RESTRICTED"));
+        }
+        return reject(new Error(`DOWNLOAD_FAILED: ${errorOutput || "Unknown exit error"}`));
+      }
+
+      try {
+        const files = fs.readdirSync(downloadDir);
+        let newestFile = null;
+        let newestTime = 0;
+
+        for (const file of files) {
+          const fullPath = path.join(downloadDir, file);
+          const stats = fs.statSync(fullPath);
+          if (stats.isFile() && stats.mtimeMs > newestTime) {
+            newestFile = fullPath;
+            newestTime = stats.mtimeMs;
+          }
+        }
+
+        if (!newestFile) {
+          return reject(new Error("DOWNLOAD_FAILED: Output file not resolved"));
+        }
+
+        const stats = fs.statSync(newestFile);
+        const fileSizeMB = stats.size / (1024 * 1024);
+
+        if (fileSizeMB > config.maxFileSizeMB) {
+          try { fs.unlinkSync(newestFile); } catch {}
+          return reject(new Error("FILE_TOO_LARGE"));
+        }
+
+        resolve({
+          filePath: newestFile,
+          title: path.basename(newestFile, path.extname(newestFile)),
+          fileSize: stats.size,
+          fileSizeMB: fileSizeMB.toFixed(2),
+        });
+      } catch (err) {
+        reject(new Error(`DOWNLOAD_RESOLVE_FAILED: ${err.message}`));
+      }
+    });
+  });
 }
 
 /**
- * Check if downloader is ready. Always true on API-mode.
+ * Check if yt-dlp is installed and accessible.
  */
 async function isYtDlpInstalled() {
-  return true;
+  return new Promise((resolve) => {
+    execFile(ytdlpCmd, ["--version"], (error, stdout) => {
+      if (error) {
+        resolve(false);
+      } else {
+        console.log(`✅ yt-dlp version: ${stdout.trim()}`);
+        resolve(true);
+      }
+    });
+  });
 }
 
 module.exports = { downloadVideo, isYtDlpInstalled };

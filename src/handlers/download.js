@@ -65,7 +65,7 @@ function registerDownloadHandler(bot) {
 
     let result = null;
     try {
-      // Fetch the direct CDN URL from Cobalt API
+      // Download video locally using yt-dlp
       result = await downloadVideo(url, quality);
       
       // Update progress message - sending video
@@ -76,9 +76,10 @@ function registerDownloadHandler(bot) {
         { parse_mode: "HTML" }
       );
  
-      // Deliver video using direct CDN URL (Telegram downloads it directly)
+      // Deliver video using grammy InputFile (local file upload)
       const botInfo = await bot.api.getMe();
-      await ctx.replyWithVideo(result.filePath, {
+      const { InputFile } = require("grammy");
+      await ctx.replyWithVideo(new InputFile(result.filePath), {
         caption: messages.downloadCompleteMessage(
           getPlatformLabel(platform),
           rateLimit.used + 1,
@@ -96,9 +97,27 @@ function registerDownloadHandler(bot) {
       try {
         await ctx.api.deleteMessage(ctx.chat.id, progressMsg.message_id);
       } catch {}
+
+      // Clean up local temp file
+      try {
+        const fs = require("fs");
+        if (result && result.filePath && fs.existsSync(result.filePath)) {
+          fs.unlinkSync(result.filePath);
+        }
+      } catch (unlinkErr) {
+        console.error("Temp file deletion failed:", unlinkErr.message);
+      }
     } catch (error) {
       console.error(`Download error for ${url}:`, error.message);
       
+      // Clean up local temp file if it was created
+      try {
+        const fs = require("fs");
+        if (result && result.filePath && fs.existsSync(result.filePath)) {
+          fs.unlinkSync(result.filePath);
+        }
+      } catch {}
+
       // Fallback if URL was successfully resolved but Telegram delivery failed
       if (result && result.filePath) {
         try {
@@ -123,6 +142,7 @@ function registerDownloadHandler(bot) {
           console.error("Fallback edit failed:", fallbackErr.message);
         }
       }
+
 
       let errorCode = "ERR_DOWNLOAD_FAILED";
       if (error.message.includes("status 403") || error.message.includes("403")) {
