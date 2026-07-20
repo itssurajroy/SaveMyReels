@@ -152,8 +152,7 @@ function downloadErrorMessage(errorCode = "ERR_UNKNOWN") {
     `❌ <b>Download System Error</b>\n\n` +
     `We could not process this video. Common reasons:\n` +
     `┌ • The user's account is <b>private</b>\n` +
-    `├ • The link has <b>expired or is invalid</b>\n` +
-    `└ • The video is <b>region-blocked</b>\n\n` +
+    `└ • The link has <b>expired or is invalid</b>\n\n` +
     `⚙️ Error Code: <code>${errorCode}</code>\n` +
     `💬 Support: ${config.supportUsername}\n\n` +
     `Try another URL or click below to retry.`
