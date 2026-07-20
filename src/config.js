@@ -36,6 +36,9 @@ const config = {
   // Web App
   webappUrl: process.env.WEBAPP_URL || "",
 
+  // Support
+  supportUsername: process.env.SUPPORT_USERNAME || "@surajroy1228",
+
   // Cuelinks Affiliate
   cuelinksApiKey: process.env.CUELINKS_API_KEY || "",
   cuelinksPubId: process.env.CUELINKS_PUB_ID || "",

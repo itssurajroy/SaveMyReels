@@ -145,7 +145,8 @@ function limitReachedMessage(limit) {
 /**
  * Download error message.
  */
-function downloadErrorMessage() {
+function downloadErrorMessage(errorCode = "ERR_UNKNOWN") {
+  const config = require("../config");
   return (
     SAAS_HEADER +
     `❌ <b>Download System Error</b>\n\n` +
@@ -153,6 +154,8 @@ function downloadErrorMessage() {
     `┌ • The user's account is <b>private</b>\n` +
     `├ • The link has <b>expired or is invalid</b>\n` +
     `└ • The video is <b>region-blocked</b>\n\n` +
+    `⚙️ Error Code: <code>${errorCode}</code>\n` +
+    `💬 Support: ${config.supportUsername}\n\n` +
     `Try another URL or click below to retry.`
   );
 }

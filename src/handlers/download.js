@@ -124,7 +124,16 @@ function registerDownloadHandler(bot) {
         }
       }
 
-      let errorMsg = messages.downloadErrorMessage();
+      let errorCode = "ERR_DOWNLOAD_FAILED";
+      if (error.message.includes("status 403") || error.message.includes("403")) {
+        errorCode = "ERR_PRIVATE_PROFILE";
+      } else if (error.message.includes("status 404") || error.message.includes("404")) {
+        errorCode = "ERR_NOT_FOUND";
+      } else if (error.message.includes("timeout") || error.message.includes("Timeout")) {
+        errorCode = "ERR_GATEWAY_TIMEOUT";
+      }
+
+      let errorMsg = messages.downloadErrorMessage(errorCode);
  
       try {
         await ctx.api.editMessageText(
