@@ -91,33 +91,45 @@ bot.catch((err) => {
 
 let dbInitialized = false;
 
-// Create the webhook callback handler using Grammy's next-js adapter (native Vercel)
-const handleWebhook = webhookCallback(bot, "next-js");
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on("error", reject);
+  });
+}
 
 module.exports = async (req, res) => {
   try {
-    // 1. Ensure cloud Postgres is connected
+    if (req.method !== "POST") {
+      res.status(200).send("OK");
+      return;
+    }
+
     if (!dbInitialized) {
       await initDatabase();
       dbInitialized = true;
     }
 
-    const queries = require("../src/database/queries");
-    
-    // Log incoming update payload
-    await queries.addLog(`[INCOMING] ${req.method} ${req.url} - Body: ${JSON.stringify(req.body || {})}`);
-
-    // 2. Cache bot info on first request
     await bot.init();
 
-    // 3. Process webhook update
-    return await handleWebhook(req, res);
+    const update = await parseBody(req);
+    await bot.handleUpdate(update);
+
+    res.status(200).send("OK");
   } catch (err) {
     console.error("❌ Vercel Webhook error:", err.message);
     try {
       const queries = require("../src/database/queries");
       await queries.addLog(`[ERROR] ${err.message}\nStack: ${err.stack}`);
     } catch {}
-    res.status(500).json({ error: err.message });
+    res.status(200).send("OK");
   }
 };
