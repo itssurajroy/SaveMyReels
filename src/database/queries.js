@@ -222,9 +222,19 @@ async function getDailyLimit(userId) {
  */
 async function getDownloadHistory(userId, limit = 10) {
   return queryAll(
-    `SELECT url, platform, downloaded_at FROM downloads 
+    `SELECT id, url, platform, downloaded_at FROM downloads 
      WHERE user_id = $1 ORDER BY downloaded_at DESC LIMIT $2`,
     [userId, limit]
+  );
+}
+
+/**
+ * Get a download URL by its ID.
+ */
+async function getDownloadById(downloadId) {
+  return queryOne(
+    "SELECT id, url, platform FROM downloads WHERE id = $1",
+    [downloadId]
   );
 }
 
@@ -411,6 +421,7 @@ module.exports = {
   getDailyDownloadCount,
   getDailyLimit,
   getDownloadHistory,
+  getDownloadById,
   getTotalUsers,
   getActiveUsersToday,
   getDownloadsToday,

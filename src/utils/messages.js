@@ -10,13 +10,11 @@ const DECORATIVE_DIVIDER = `\n────────────────�
 function welcomeMessage(firstName) {
   return (
     SAAS_HEADER +
-    `🎬 <b>Welcome to the Premium Video Downloader, ${firstName}!</b>\n\n` +
+    `🎬 <b>Welcome to the Premium Instagram Downloader, ${firstName}!</b>\n\n` +
     `I can download videos from:\n` +
-    `┌ 📸 <b>Instagram Reels</b>\n` +
-    `├ 🎵 <b>TikTok Videos</b>\n` +
-    `└ ▶️ <b>YouTube Shorts</b>\n\n` +
+    `└ 📸 <b>Instagram (Reels, Posts, Carousels)</b>\n\n` +
     `<b>How to use:</b>\n` +
-    `Simply paste any supported link in this chat! ⚡\n\n` +
+    `Simply paste any Instagram link in this chat! ⚡\n\n` +
     `<b>Your Daily Limits:</b>\n` +
     `┌ 📊 Free Tier: <b>5 downloads/day</b>\n` +
     `└ 👥 Referral: <b>+3 downloads/day</b> per friend\n` +
@@ -123,7 +121,8 @@ function downloadCompleteMessage(platform, used, limit, downloadTime) {
     `┌ 📸 Platform: <b>${platform}</b>\n` +
     `├ ⏱️ Speed: <b>${downloadTime}</b>\n` +
     `└ 📊 Daily Quota: <b>${quotaRatioText}</b>\n\n` +
-    `<i>⚡ Share the bot with your friends to increase your quota!</i>`
+    `⚡ <b>Auto-delete in 1 hour. Forward to keep!</b>\n\n` +
+    `<i>Share the bot with your friends to increase your quota!</i>`
   );
 }
 
@@ -180,10 +179,26 @@ function unsupportedUrlMessage() {
     SAAS_HEADER +
     `❓ <b>Unsupported Video Source</b>\n\n` +
     `Please send a link from one of these platforms:\n` +
-    `┌ 📸 Instagram (Reels, Posts)\n` +
-    `├ 🎵 TikTok (Videos)\n` +
-    `└ ▶️ YouTube (Shorts, Videos)\n\n` +
+    `└ 📸 Instagram (Reels, Posts, Carousels)\n\n` +
     `Example: <code>https://www.instagram.com/reel/...</code>`
+  );
+}
+
+/**
+ * YouTube/TikTok redirect message.
+ */
+function youtubeTiktokRedirectMessage(platform) {
+  const platformName = platform === "youtube" ? "YouTube" : "TikTok";
+  return (
+    SAAS_HEADER +
+    `🚫 <b>${platformName} Not Supported</b>\n\n` +
+    `Sorry, I currently only support <b>Instagram</b> downloads.\n\n` +
+    `<b>Why?</b>\n` +
+    `${platformName} has anti-bot protections that prevent reliable downloads on our server.\n\n` +
+    `<b>What you can do:</b>\n` +
+    `┌ 📸 Send an <b>Instagram Reel, Post, or Carousel</b> link instead\n` +
+    `└ 🔍 Search for the content on Instagram and share that link\n\n` +
+    `<i>We're working on adding more platforms in the future!</i>`
   );
 }
 
@@ -273,7 +288,7 @@ function helpMessage() {
     SAAS_HEADER +
     `❓ <b>Documentation & Help Center</b>\n\n` +
     `<b>Quick Start:</b>\n` +
-    `Copy a Reels, TikTok, or Shorts link, paste it in this chat, and we will handle the rest.\n\n` +
+    `Copy an Instagram Reel, Post, or Carousel link, paste it in this chat, and we will handle the rest.\n\n` +
     `<b>📌 Bot Command Registry:</b>\n` +
     `┌ /start — Open welcome deck & main dashboard\n` +
     `├ /settings — Adjust your download quality settings\n` +
@@ -361,6 +376,18 @@ function broadcastCompleteMessage(sent, failed) {
   );
 }
 
+/**
+ * Empty download history message.
+ */
+function emptyHistoryMessage() {
+  return (
+    SAAS_HEADER +
+    `📂 <b>Download History</b>\n\n` +
+    `You haven't downloaded any videos yet.\n\n` +
+    `Paste a video link to get started! ⚡`
+  );
+}
+
 module.exports = {
   welcomeMessage,
   welcomeBackMessage,
@@ -386,4 +413,5 @@ module.exports = {
   adminStatsMessage,
   broadcastPreviewMessage,
   broadcastCompleteMessage,
+  emptyHistoryMessage,
 };

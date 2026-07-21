@@ -12,6 +12,7 @@ const { registerHelpHandler } = require("../src/handlers/help");
 const { registerSettingsHandler } = require("../src/handlers/settings");
 const { registerAdminHandler } = require("../src/handlers/admin");
 const { registerInlineHandler } = require("../src/handlers/inline");
+const { registerHistoryHandler } = require("../src/handlers/history");
 
 // Utilities
 const { mainMenuKeyboard, joinChannelsKeyboard } = require("../src/utils/keyboards");
@@ -32,6 +33,7 @@ registerHelpHandler(bot);
 registerSettingsHandler(bot);
 registerAdminHandler(bot);
 registerInlineHandler(bot);
+registerHistoryHandler(bot);
 
 // Register shared callbacks
 bot.callbackQuery("back_to_menu", async (ctx) => {

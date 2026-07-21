@@ -37,6 +37,23 @@ function registerDownloadHandler(bot) {
     }
 
     const { platform, url } = detected;
+
+    // Show redirect message for YouTube/TikTok
+    if (platform === "youtube" || platform === "tiktok") {
+      await ctx.reply(messages.youtubeTiktokRedirectMessage(platform), {
+        parse_mode: "HTML",
+      });
+      return;
+    }
+
+    // Only process Instagram
+    if (platform !== "instagram") {
+      await ctx.reply(messages.unsupportedUrlMessage(), {
+        parse_mode: "HTML",
+      });
+      return;
+    }
+
     const userId = ctx.from.id;
 
     // Check rate limit (must await since queries are async now!)
@@ -61,12 +78,37 @@ function registerDownloadHandler(bot) {
       { parse_mode: "HTML" }
     );
 
+    // Show typing indicator
+    ctx.api.sendChatAction(ctx.chat.id, "upload_video").catch(() => {});
+
     const startTime = Date.now();
 
     let result = null;
     try {
-      // Download video locally using yt-dlp
-      result = await downloadVideo(url, quality);
+      // Progress callback — update the message with real-time download progress
+      let lastUpdate = 0;
+      const onProgress = (percent, speed, eta) => {
+        // Throttle edits to max once per 3 seconds to avoid Telegram rate limits
+        const now = Date.now();
+        if (now - lastUpdate < 3000) return;
+        lastUpdate = now;
+
+        // Refresh typing indicator every update
+        ctx.api.sendChatAction(ctx.chat.id, "upload_video").catch(() => {});
+
+        const bar = "█".repeat(Math.round(percent / 10)) + "░".repeat(10 - Math.round(percent / 10));
+        const text =
+          `⬇️ <b>Downloading...</b>\n\n` +
+          `<code>[${bar}] ${percent.toFixed(1)}%</code>\n\n` +
+          `⚡ Speed: <b>${speed}</b>  •  ETA: <b>${eta}</b>`;
+
+        ctx.api.editMessageText(ctx.chat.id, progressMsg.message_id, text, {
+          parse_mode: "HTML",
+        }).catch(() => {});
+      };
+
+      // Download video locally
+      result = await downloadVideo(url, quality, onProgress);
       
       // Update progress message - sending video
       await ctx.api.editMessageText(
@@ -76,23 +118,43 @@ function registerDownloadHandler(bot) {
         { parse_mode: "HTML" }
       );
  
-      // Deliver video using grammy InputFile (local file upload)
+      // Build caption with post caption if available
       const botInfo = await bot.api.getMe();
       const { InputFile } = require("grammy");
-      await ctx.replyWithVideo(new InputFile(result.filePath), {
-        caption: messages.downloadCompleteMessage(
-          getPlatformLabel(platform),
-          rateLimit.used + 1,
-          rateLimit.limit,
-          formatDuration((Date.now() - startTime) / 1000)
-        ),
+      let caption = messages.downloadCompleteMessage(
+        getPlatformLabel(platform),
+        rateLimit.used + 1,
+        rateLimit.limit,
+        formatDuration((Date.now() - startTime) / 1000)
+      );
+      
+      // Append post caption if available
+      if (result.caption) {
+        const truncatedCaption = result.caption.length > 200 
+          ? result.caption.substring(0, 200) + "..." 
+          : result.caption;
+        caption = `${caption}\n\n📝 <b>Caption:</b>\n<blockquote>${truncatedCaption}</blockquote>`;
+      }
+ 
+      // Deliver video using grammy InputFile (local file upload)
+      const sentMessage = await ctx.replyWithVideo(new InputFile(result.filePath), {
+        caption,
         parse_mode: "HTML",
         reply_markup: postDownloadKeyboard(botInfo.username, url),
       });
+      result.sentMessage = sentMessage;
  
       // Log download in cloud DB
       await logDownload(userId, url, platform);
- 
+
+      // Schedule auto-delete of the video message after 1 hour
+      const videoMsg = result.sentMessage;
+      if (videoMsg && videoMsg.message_id) {
+        setTimeout(() => {
+          ctx.api.deleteMessage(ctx.chat.id, videoMsg.message_id).catch(() => {});
+        }, 60 * 60 * 1000); // 1 hour
+      }
+
       // Clean up progress message
       try {
         await ctx.api.deleteMessage(ctx.chat.id, progressMsg.message_id);

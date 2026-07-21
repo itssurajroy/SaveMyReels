@@ -17,7 +17,9 @@ function mainMenuKeyboard() {
   kb.text("⭐ Go Premium", "premium_info")
     .text("👥 Refer Friends", "referral_info")
     .row()
+    .text("📂 History", "history")
     .text("⚙️ Settings", "settings")
+    .row()
     .text("❓ Help", "help");
 
   return kb;

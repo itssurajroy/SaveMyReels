@@ -26,17 +26,36 @@ function registerInlineHandler(bot) {
     const detected = detectPlatform(query);
     if (!detected) {
       await ctx.answerInlineQuery([], {
-        switch_pm_text: "❌ Unsupported URL. Copy a Reels/Shorts/TikTok link.",
+        switch_pm_text: "❌ Unsupported URL. Copy an Instagram link.",
         switch_pm_parameter: "help",
       });
       return;
     }
 
     const { platform, url } = detected;
+
+    // Redirect YouTube/TikTok
+    if (platform === "youtube" || platform === "tiktok") {
+      await ctx.answerInlineQuery([], {
+        switch_pm_text: `🚫 ${platform === "youtube" ? "YouTube" : "TikTok"} not supported. Instagram only.`,
+        switch_pm_parameter: "help",
+      });
+      return;
+    }
+
+    // Only process Instagram
+    if (platform !== "instagram") {
+      await ctx.answerInlineQuery([], {
+        switch_pm_text: "❌ Unsupported URL. Copy an Instagram link.",
+        switch_pm_parameter: "help",
+      });
+      return;
+    }
+
     const userId = ctx.from.id;
 
-    // Check rate limit (simulate check)
-    const rateLimit = checkRateLimit(userId);
+    // Check rate limit
+    const rateLimit = await checkRateLimit(userId);
     if (!rateLimit.allowed) {
       await ctx.answerInlineQuery([], {
         switch_pm_text: "🚫 Daily limit reached! Tap to upgrade.",

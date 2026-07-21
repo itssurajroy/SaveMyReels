@@ -1,27 +1,31 @@
 {
   "name": "savemyreels",
-  "version": "1.0.0",
-  "description": "Multi-platform video download Telegram bot with monetization — Instagram Reels, YouTube Shorts, TikTok",
+  "version": "2.0.0",
+  "description": "Premium Instagram downloader Telegram bot — Reels, Posts, Carousels",
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
-    "dev": "nodemon api/index.js"
+    "dev": "nodemon api/index.js",
+    "bot": "node src/index.js",
+    "bot:dev": "nodemon src/index.js"
   },
   "keywords": [
     "telegram",
     "bot",
     "instagram",
-    "youtube",
-    "tiktok",
-    "downloader"
+    "downloader",
+    "reels"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@jerrycoder/instagram-api": "^2.5.9",
+    "axios": "^1.7.0",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
     "grammy": "^1.30.0",
-    "pg": "^8.13.3"
+    "pg": "^8.13.3",
+    "ultra-igdl": "^1.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

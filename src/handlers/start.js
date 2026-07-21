@@ -1,7 +1,8 @@
 const { InputFile } = require("grammy");
 const path = require("path");
 const fs = require("fs");
-const { createUser, getUser } = require("../database/queries");
+const config = require("../config");
+const { createUser, getUser, isPremiumActive, activatePremium } = require("../database/queries");
 const { mainMenuKeyboard } = require("../utils/keyboards");
 const messages = require("../utils/messages");
 const { parseReferralCode } = require("../utils/helpers");
@@ -44,6 +45,11 @@ function registerStartHandler(bot) {
           );
         } catch {}
       }
+    }
+
+    // Auto-activate premium for admins
+    if (config.adminIds.includes(userId) && !(await isPremiumActive(userId))) {
+      await activatePremium(userId, 36500); // ~100 years
     }
 
     const bannerPath = path.join(__dirname, "../../assets/banner.png");

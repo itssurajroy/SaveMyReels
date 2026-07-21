@@ -4,3 +4,10 @@ node_modules/
 downloads/
 *.log
 bin/
+nul
+*-player-script.js
+
+.vercel
+.env*.local
+src/web/app/node_modules/
+src/web/app/dist/

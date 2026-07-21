@@ -4,9 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SaveMyReels — Fast Social Video Downloader SaaS</title>
+  <meta name="description" content="Save public Instagram Reels, Posts, and Carousels instantly via Telegram. Free downloads, no signup required.">
+  <meta property="og:title" content="SaveMyReels — Fast Instagram Downloader">
+  <meta property="og:description" content="Save public Instagram Reels, Posts, and Carousels instantly via Telegram. Free downloads, no signup required.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://save-my-reels.vercel.app">
+  <meta property="og:image" content="https://save-my-reels.vercel.app/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SaveMyReels — Fast Instagram Downloader">
+  <meta name="twitter:description" content="Save public Instagram Reels, Posts, and Carousels instantly via Telegram.">
+  <meta name="twitter:image" content="https://save-my-reels.vercel.app/og-image.png">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%23d946ef'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23g)'/%3E%3Cpolygon points='38,25 78,50 38,75' fill='white'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
       --bg-color: #0b0f19;
@@ -20,15 +32,8 @@
       --font-body: 'Plus Jakarta Sans', sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
     body {
       background-color: var(--bg-color);
@@ -38,671 +43,313 @@
       line-height: 1.6;
     }
 
-    /* Ambient background glows */
     .glow-1 {
-      position: absolute;
-      top: -10%;
-      left: 10%;
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
-      filter: blur(60px);
-      z-index: -1;
-      pointer-events: none;
+      position: absolute; top: -10%; left: 10%; width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+      filter: blur(60px); z-index: -1; pointer-events: none;
     }
-
     .glow-2 {
-      position: absolute;
-      top: 40%;
-      right: -10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(217, 70, 239, 0.1) 0%, rgba(0,0,0,0) 70%);
-      filter: blur(70px);
-      z-index: -1;
-      pointer-events: none;
+      position: absolute; top: 40%; right: -10%; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(217, 70, 239, 0.1) 0%, transparent 70%);
+      filter: blur(70px); z-index: -1; pointer-events: none;
     }
-
     .glow-3 {
-      position: absolute;
-      top: 80%;
-      left: -10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0,0,0,0) 70%);
-      filter: blur(80px);
-      z-index: -1;
-      pointer-events: none;
+      position: absolute; top: 80%; left: -10%; width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+      filter: blur(80px); z-index: -1; pointer-events: none;
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.25rem 8%;
-      border-bottom: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      background: rgba(11, 15, 25, 0.85);
-      z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.25rem 8%; border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px); position: sticky; top: 0;
+      background: rgba(11, 15, 25, 0.85); z-index: 100;
     }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    .logo-container { display: flex; align-items: center; gap: 0.5rem; }
 
     .logo-icon {
-      font-size: 1.8rem;
+      width: 36px; height: 36px; border-radius: 10px;
       background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      display: flex; align-items: center; justify-content: center;
     }
+    .logo-icon svg { width: 20px; height: 20px; color: white; }
 
     .logo-text {
-      font-family: var(--font-title);
-      font-weight: 800;
-      font-size: 1.5rem;
-      letter-spacing: -0.5px;
+      font-family: var(--font-title); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;
     }
 
     .btn {
-      padding: 0.75rem 1.75rem;
-      border-radius: 9999px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      border: none;
-      font-size: 0.95rem;
+      padding: 0.75rem 1.75rem; border-radius: 9999px; font-weight: 600;
+      text-decoration: none; transition: all 0.2s ease; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      border: none; font-size: 0.95rem;
     }
+    .btn svg { width: 18px; height: 18px; }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+      color: white; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
     }
-
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.45);
+      filter: brightness(1.1);
     }
 
     .btn-secondary {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      color: white;
+      background: var(--glass-bg); border: 1px solid var(--glass-border); color: white;
     }
-
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.18);
     }
 
-    /* Container Alignment */
-    .section-container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 4rem 1.5rem;
-    }
+    .section-container { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
 
-    /* Hero Section */
-    .hero {
-      text-align: center;
-      padding-top: 5rem;
-      padding-bottom: 2rem;
-    }
+    /* Hero */
+    .hero { text-align: center; padding-top: 5rem; padding-bottom: 2rem; }
 
     .hero-title {
-      font-family: var(--font-title);
-      font-size: 4.5rem;
-      font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 1.5rem;
-      letter-spacing: -1.5px;
+      font-family: var(--font-title); font-size: 4.5rem; font-weight: 800;
+      line-height: 1.1; margin-bottom: 1.5rem; letter-spacing: -1.5px;
     }
-
     .hero-title span {
       background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: 1.3rem;
-      color: #9ca3af;
-      max-width: 750px;
-      margin: 0 auto 2rem auto;
-      font-weight: 300;
+      font-size: 1.3rem; color: #9ca3af; max-width: 750px;
+      margin: 0 auto 2rem auto; font-weight: 300;
     }
 
     .cta-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 5rem;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.75rem; margin-bottom: 5rem;
     }
-
-    .cta-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1.25rem;
-    }
-
-    .cta-reassurance {
-      font-size: 0.85rem;
-      color: #6b7280;
-      font-weight: 400;
-    }
+    .cta-buttons { display: flex; justify-content: center; gap: 1.25rem; }
+    .cta-reassurance { font-size: 0.85rem; color: #6b7280; font-weight: 400; }
 
     .sample-links-box {
-      margin-top: 1.5rem;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      border-radius: 12px;
-      padding: 0.75rem 1.5rem;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
+      margin-top: 1.5rem; background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border); border-radius: 12px;
+      padding: 0.75rem 1.5rem; display: inline-flex; flex-direction: column;
+      align-items: center; gap: 0.5rem;
     }
-
     .sample-title {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
+      font-size: 0.75rem; color: #9ca3af; text-transform: uppercase;
+      letter-spacing: 1px; font-weight: 700;
     }
-
-    .sample-links {
-      display: flex;
-      gap: 1.5rem;
-      font-size: 0.8rem;
-    }
-
+    .sample-links { display: flex; gap: 1.5rem; font-size: 0.8rem; }
     .sample-links a {
-      color: var(--primary);
-      text-decoration: none;
-      cursor: pointer;
-      font-weight: 600;
-      transition: color 0.2s ease;
+      color: var(--primary); text-decoration: none; cursor: pointer;
+      font-weight: 600; transition: color 0.2s ease; display: inline-flex; align-items: center; gap: 0.35rem;
     }
+    .sample-links a svg { width: 14px; height: 14px; }
+    .sample-links a:hover { color: var(--accent); }
 
-    .sample-links a:hover {
-      color: var(--accent);
-      text-decoration: underline;
-    }
-
-    /* Features Grid */
+    /* Features */
     .features-banner {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      padding: 2.5rem;
-      backdrop-filter: blur(12px);
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      text-align: center;
-      margin-bottom: 6rem;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 28px; padding: 2.5rem; backdrop-filter: blur(12px);
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem; text-align: center; margin-bottom: 6rem;
     }
 
-    .feature-item span {
-      font-size: 2.25rem;
-      margin-bottom: 0.5rem;
-      display: inline-block;
+    .feature-item { cursor: default; }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 14px; margin: 0 auto 0.75rem auto;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(217, 70, 239, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      display: flex; align-items: center; justify-content: center;
     }
+    .feature-icon svg { width: 22px; height: 22px; color: var(--primary); }
 
     .feature-item h3 {
-      font-family: var(--font-title);
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-      color: white;
+      font-family: var(--font-title); font-size: 1.15rem; font-weight: 700;
+      margin-bottom: 0.25rem; color: white;
     }
+    .feature-item p { color: #9ca3af; font-size: 0.8rem; font-weight: 300; }
 
-    .feature-item p {
-      color: #9ca3af;
-      font-size: 0.8rem;
-      font-weight: 300;
-    }
-
-    /* Section Heading Styles */
-    .section-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-
+    /* Section Headers */
+    .section-header { text-align: center; margin-bottom: 4rem; }
     .section-header h2 {
-      font-family: var(--font-title);
-      font-size: 2.75rem;
-      font-weight: 800;
-      margin-bottom: 0.5rem;
-      letter-spacing: -0.5px;
+      font-family: var(--font-title); font-size: 2.75rem; font-weight: 800;
+      margin-bottom: 0.5rem; letter-spacing: -0.5px;
     }
+    .section-header p { color: #9ca3af; font-size: 1.1rem; font-weight: 300; }
 
-    .section-header p {
-      color: #9ca3af;
-      font-size: 1.1rem;
-      font-weight: 300;
-    }
-
-    /* How It Works Section */
+    /* Steps */
     .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem; margin-bottom: 3rem;
     }
-
     .step-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 2.5rem;
-      position: relative;
-      transition: all 0.3s ease;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 24px; padding: 2.5rem; position: relative;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-
     .step-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(99, 102, 241, 0.4);
-      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.35);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08);
     }
-
     .step-badge {
-      position: absolute;
-      top: 25px;
-      right: 25px;
-      font-family: var(--font-title);
-      font-weight: 800;
-      font-size: 2.5rem;
-      color: rgba(255, 255, 255, 0.05);
-      line-height: 1;
+      position: absolute; top: 25px; right: 25px; font-family: var(--font-title);
+      font-weight: 800; font-size: 2.5rem; color: rgba(255, 255, 255, 0.05); line-height: 1;
     }
-
-    .step-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1.5rem;
-      display: inline-block;
+    .step-icon-wrap {
+      width: 48px; height: 48px; border-radius: 14px; margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(217, 70, 239, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      display: flex; align-items: center; justify-content: center;
     }
+    .step-icon-wrap svg { width: 22px; height: 22px; color: var(--primary); }
 
     .step-card h3 {
-      font-family: var(--font-title);
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
+      font-family: var(--font-title); font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem;
     }
-
-    .step-card p {
-      color: #9ca3af;
-      font-size: 0.95rem;
-      font-weight: 300;
-      margin-bottom: 1.25rem;
-    }
-
+    .step-card p { color: #9ca3af; font-size: 0.95rem; font-weight: 300; margin-bottom: 1.25rem; }
     .step-example {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 0.5rem 0.75rem;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 0.75rem;
-      color: var(--tg-link, #6366f1);
-      word-break: break-all;
+      background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.5rem 0.75rem; border-radius: 8px; font-family: monospace;
+      font-size: 0.75rem; color: var(--primary); word-break: break-all;
     }
 
-    /* Guidelines Cards (Supported vs Unsupported) */
+    /* Guidelines */
     .guidelines-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 2.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border);
+      border-radius: 24px; padding: 2.5rem; display: grid;
+      grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 2rem;
     }
-
     .guideline-col h3 {
-      font-family: var(--font-title);
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-family: var(--font-title); font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;
     }
-
+    .guideline-col h3 svg { width: 20px; height: 20px; }
     .guideline-col h3.yes { color: #10b981; }
     .guideline-col h3.no { color: #ef4444; }
+    .guideline-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+    .guideline-col li { font-size: 0.9rem; color: #d1d5db; font-weight: 300; }
+    .guidelines-cta { text-align: center; margin-bottom: 6rem; }
 
-    .guideline-col ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .guideline-col li {
-      font-size: 0.9rem;
-      color: #d1d5db;
-      font-weight: 300;
-    }
-
-    .guidelines-cta {
-      text-align: center;
-      margin-bottom: 6rem;
-    }
-
-    /* Pricing Section */
+    /* Pricing */
     .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 450px));
-      gap: 2.5rem;
-      justify-content: center;
-      margin-bottom: 6rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 450px));
+      gap: 2.5rem; justify-content: center; margin-bottom: 6rem;
     }
-
     .pricing-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      padding: 3rem 2.5rem;
-      display: flex;
-      flex-direction: column;
-      position: relative;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 28px; padding: 3rem 2.5rem; display: flex;
+      flex-direction: column; position: relative; transition: border-color 0.2s ease;
     }
-
+    .pricing-card:hover { border-color: rgba(99, 102, 241, 0.3); }
     .pricing-card.popular {
       border-color: rgba(217, 70, 239, 0.3);
       box-shadow: 0 10px 40px rgba(217, 70, 239, 0.08);
       background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(255, 255, 255, 0.02));
     }
-
     .popular-tag {
-      position: absolute;
-      top: 25px;
-      right: 25px;
+      position: absolute; top: 25px; right: 25px;
       background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      color: white; font-size: 0.7rem; font-weight: 800;
+      padding: 0.25rem 0.75rem; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;
     }
-
-    .pricing-header h3 {
-      font-family: var(--font-title);
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
+    .pricing-header h3 { font-family: var(--font-title); font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
     .pricing-price {
-      font-family: var(--font-title);
-      font-size: 3rem;
-      font-weight: 800;
-      margin: 1.5rem 0;
-      display: flex;
-      align-items: baseline;
-      gap: 0.25rem;
+      font-family: var(--font-title); font-size: 3rem; font-weight: 800;
+      margin: 1.5rem 0; display: flex; align-items: baseline; gap: 0.25rem;
     }
+    .pricing-price span { font-size: 1.1rem; color: #9ca3af; font-weight: 400; }
+    .pricing-features { list-style: none; margin: 2rem 0; display: flex; flex-direction: column; gap: 1rem; flex-grow: 1; }
+    .pricing-features li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem; color: #d1d5db; }
+    .pricing-features li svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .pricing-features li svg.check { color: #10b981; }
+    .pricing-features li svg.x { color: #ef4444; }
+    .pricing-features li.na { color: #6b7280; }
+    .pricing-card .btn { width: 100%; justify-content: center; padding: 0.9rem; }
 
-    .pricing-price span {
-      font-size: 1.1rem;
-      color: #9ca3af;
-      font-weight: 400;
-    }
-
-    .pricing-features {
-      list-style: none;
-      margin: 2rem 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      flex-grow: 1;
-    }
-
-    .pricing-features li {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.95rem;
-      color: #d1d5db;
-    }
-
-    .pricing-features li::before {
-      content: '✓';
-      color: #10b981;
-      font-weight: bold;
-    }
-
-    .pricing-features li.na {
-      color: #6b7280;
-    }
-
-    .pricing-features li.na::before {
-      content: '✗';
-      color: #ef4444;
-    }
-
-    .pricing-card .btn {
-      width: 100%;
-      justify-content: center;
-      padding: 0.9rem;
-    }
-
-    /* Built For Section */
+    /* Built For */
     .built-for-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-bottom: 6rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem; margin-bottom: 6rem;
     }
-
     .built-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 20px;
-      padding: 2.25rem;
-      backdrop-filter: blur(12px);
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 20px; padding: 2.25rem; backdrop-filter: blur(12px);
+      transition: border-color 0.2s ease;
     }
-
-    .built-card span {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      display: inline-block;
+    .built-card:hover { border-color: rgba(99, 102, 241, 0.3); }
+    .built-icon {
+      width: 44px; height: 44px; border-radius: 12px; margin-bottom: 1rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(217, 70, 239, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      display: flex; align-items: center; justify-content: center;
     }
+    .built-icon svg { width: 20px; height: 20px; color: var(--primary); }
+    .built-card h3 { font-family: var(--font-title); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .built-card p { color: #9ca3af; font-size: 0.9rem; font-weight: 300; }
 
-    .built-card h3 {
-      font-family: var(--font-title);
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-    }
-
-    .built-card p {
-      color: #9ca3af;
-      font-size: 0.9rem;
-      font-weight: 300;
-    }
-
-    /* FAQ Section */
-    .faq-list {
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
+    /* FAQ */
+    .faq-list { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
     .faq-item {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s ease;
+      background: var(--glass-bg); border: 1px solid var(--glass-border);
+      border-radius: 16px; overflow: hidden; transition: border-color 0.2s ease;
     }
-
+    .faq-item:hover { border-color: rgba(99, 102, 241, 0.25); }
     .faq-question {
-      padding: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 1.1rem;
-      user-select: none;
+      padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; font-weight: 600; font-size: 1.1rem; user-select: none;
     }
-
     .faq-question::after {
-      content: '+';
-      font-size: 1.5rem;
-      color: var(--primary);
-      transition: transform 0.3s ease;
+      content: '+'; font-size: 1.5rem; color: var(--primary); transition: transform 0.3s ease;
     }
-
-    .faq-item.open .faq-question::after {
-      transform: rotate(45deg);
-    }
-
+    .faq-item.open .faq-question::after { transform: rotate(45deg); }
     .faq-answer {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
-      padding: 0 1.5rem;
-      color: #9ca3af;
-      font-size: 0.95rem;
-      font-weight: 300;
+      max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
+      padding: 0 1.5rem; color: #9ca3af; font-size: 0.95rem; font-weight: 300;
     }
-
     .faq-item.open .faq-answer {
-      max-height: 300px;
-      padding-bottom: 1.5rem;
-      transition: max-height 0.3s ease-in-out;
+      max-height: 300px; padding-bottom: 1.5rem; transition: max-height 0.3s ease-in-out;
     }
 
     /* Footer */
     footer {
-      border-top: 1px solid var(--glass-border);
-      padding: 3rem 8%;
-      background: rgba(11, 15, 25, 0.95);
-      margin-top: 6rem;
+      border-top: 1px solid var(--glass-border); padding: 3rem 8%;
+      background: rgba(11, 15, 25, 0.95); margin-top: 6rem;
     }
-
     .footer-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 3rem;
-      margin-bottom: 3rem;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 3rem; margin-bottom: 3rem;
     }
-
-    .footer-brand {
-      max-width: 300px;
-    }
-
-    .footer-brand p {
-      color: #9ca3af;
-      font-size: 0.9rem;
-      margin-top: 0.75rem;
-      font-weight: 300;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 4rem;
-    }
-
-    .link-group h4 {
-      font-family: var(--font-title);
-      font-size: 1.05rem;
-      margin-bottom: 1.25rem;
-      letter-spacing: 0.5px;
-      color: white;
-    }
-
-    .link-group ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
+    .footer-brand { max-width: 300px; }
+    .footer-brand p { color: #9ca3af; font-size: 0.9rem; margin-top: 0.75rem; font-weight: 300; }
+    .footer-links { display: flex; gap: 4rem; }
+    .link-group h4 { font-family: var(--font-title); font-size: 1.05rem; margin-bottom: 1.25rem; color: white; }
+    .link-group ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
     .link-group a {
-      color: #9ca3af;
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.2s ease;
+      color: #9ca3af; text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;
     }
-
-    .link-group a:hover {
-      color: white;
-    }
-
+    .link-group a:hover { color: white; }
     .footer-bottom {
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 2rem;
+      display: flex; flex-direction: column; gap: 1.5rem;
     }
+    .disclaimer { font-size: 0.8rem; color: #6b7280; line-height: 1.6; font-weight: 300; }
+    .copyright { display: flex; justify-content: space-between; color: #6b7280; font-size: 0.85rem; }
 
-    .disclaimer {
-      font-size: 0.8rem;
-      color: #6b7280;
-      line-height: 1.6;
-      font-weight: 300;
-    }
-
-    .copyright {
-      display: flex;
-      justify-content: space-between;
-      color: #6b7280;
-      font-size: 0.85rem;
-    }
-
+    /* Responsive */
     @media (max-width: 768px) {
-      .hero-title {
-        font-size: 3rem;
-      }
-      .cta-buttons {
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-      }
-      .btn {
-        width: 100%;
-        max-width: 350px;
-        justify-content: center;
-      }
-      .sample-links {
-        flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
-      }
-      .guidelines-card {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-      }
-      .footer-content {
-        flex-direction: column;
-      }
-      .footer-links {
-        gap: 2rem;
-        flex-direction: column;
-      }
+      .hero-title { font-size: 3rem; }
+      .cta-buttons { flex-direction: column; align-items: center; width: 100%; }
+      .btn { width: 100%; max-width: 350px; justify-content: center; }
+      .sample-links { flex-direction: column; gap: 0.5rem; text-align: center; }
+      .guidelines-card { grid-template-columns: 1fr; gap: 2rem; }
+      .footer-content { flex-direction: column; }
+      .footer-links { gap: 2rem; flex-direction: column; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
@@ -713,88 +360,108 @@
 
   <header>
     <div class="logo-container">
-      <span class="logo-icon">🎬</span>
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
       <span class="logo-text">SaveMyReels</span>
     </div>
-    <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">Open Telegram</a>
+    <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Open Telegram
+    </a>
   </header>
 
   <main class="section-container">
-    <!-- Hero Block -->
     <section class="hero">
       <h1 class="hero-title">Save Social Media Clips <span>In One Tap</span></h1>
-      <p class="hero-subtitle">A fast, convenient Telegram utility for saving public short-form videos from Instagram, TikTok, and YouTube. Sponsor-supported free downloads, ad-free premium.</p>
+      <p class="hero-subtitle">A fast, convenient Telegram utility for saving public Instagram Reels, Posts, and Carousels. Free downloads with ads, ad-free premium.</p>
       
       <div class="cta-group">
         <div class="cta-buttons">
-          <a href="https://t.me/savemyreeelsbot" class="btn btn-primary">🎬 Start Downloading Free</a>
+          <a href="https://t.me/savemyreeelsbot" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Downloading Free
+          </a>
           <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
         </div>
         <div class="cta-reassurance">Works with public links only &bull; Opens instantly inside Telegram</div>
         
-        <!-- Copyable Sample Links Box -->
         <div class="sample-links-box">
           <div class="sample-title">Try it out with these sample links:</div>
           <div class="sample-links">
-            <a onclick="navigator.clipboard.writeText('https://www.instagram.com/reel/C3_kM-3s5iO/'); alert('Instagram link copied!')">📸 Copy Instagram Reel</a>
-            <a onclick="navigator.clipboard.writeText('https://www.youtube.com/shorts/3d_aL8N9wGg'); alert('YouTube Short link copied!')">▶️ Copy YouTube Short</a>
-            <a onclick="navigator.clipboard.writeText('https://www.tiktok.com/@khaby.lame/video/7342890104'); alert('TikTok link copied!')">🎵 Copy TikTok Video</a>
+            <a onclick="navigator.clipboard.writeText('https://www.instagram.com/reel/C3_kM-3s5iO/'); alert('Instagram link copied!')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Instagram Reel
+            </a>
+            <a onclick="navigator.clipboard.writeText('https://www.instagram.com/p/C3_kM-3s5iO/'); alert('Instagram Post link copied!')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy Instagram Post
+            </a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Features & Trust Grid -->
     <section class="features-banner">
       <div class="feature-item">
-        <span>👤</span>
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
         <h3>No Account Signup</h3>
         <p>Start downloading immediately inside Telegram without passwords or registrations.</p>
       </div>
       <div class="feature-item">
-        <span>🔒</span>
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
         <h3>SSL Secured Connections</h3>
         <p>User requests are processed temporarily over SSL and wiped shortly after delivery.</p>
       </div>
       <div class="feature-item">
-        <span>⚡</span>
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
         <h3>Fast Processing Nodes</h3>
         <p>Videos are processed and sent to your chat based on your default preferences.</p>
       </div>
       <div class="feature-item">
-        <span>🎵</span>
+        <div class="feature-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+        </div>
         <h3>Clean Media Output</h3>
         <p>Saves public social media clips in clean MP4 formats (watermark-free where supported).</p>
       </div>
     </section>
 
-    <!-- How It Works Section -->
     <section id="how-it-works" style="margin-bottom: 2rem;">
       <div class="section-header">
         <h2>How It Works</h2>
         <p>Save any short video in 3 simple steps</p>
       </div>
-      
       <div class="steps-grid">
         <div class="step-card">
           <div class="step-badge">01</div>
-          <span class="step-icon">🔗</span>
+          <div class="step-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
           <h3>Copy URL</h3>
-          <p>Copy any video or post URL from Instagram, TikTok, or YouTube.</p>
+          <p>Copy any video or post URL from Instagram.</p>
           <div class="step-example">https://instagram.com/reel/C3_...</div>
         </div>
-
         <div class="step-card">
           <div class="step-badge">02</div>
-          <span class="step-icon">💬</span>
+          <div class="step-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          </div>
           <h3>Paste in Chat</h3>
           <p>Send the copied link directly to the @savemyreeelsbot Telegram chat.</p>
           <div class="step-example">Send link as message...</div>
         </div>
-
         <div class="step-card">
           <div class="step-badge">03</div>
-          <span class="step-icon">📥</span>
+          <div class="step-icon-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
           <h3>Get HD Video</h3>
           <p>The bot processes and delivers the video file directly to your chat.</p>
           <div class="step-example">Exported in HD MP4 format</div>
@@ -802,42 +469,46 @@
       </div>
     </section>
 
-    <!-- Guidelines Card (Supported vs Unsupported rules) -->
     <section class="guidelines-card">
       <div class="guideline-col">
-        <h3 class="yes">✓ Supported Formats</h3>
+        <h3 class="yes">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Supported Formats
+        </h3>
         <ul>
-          <li>• Public Instagram Reels, Posts & Video uploads</li>
-          <li>• Public YouTube Shorts & standard video clips</li>
-          <li>• Public TikTok videos (watermark-free where supported)</li>
-          <li>• Carousel slide posts (first slide resolved)</li>
+          <li>Public Instagram Reels & Video uploads</li>
+          <li>Public Instagram Posts & Images</li>
+          <li>Instagram Carousel posts (multiple images/videos)</li>
+          <li>HD quality downloads</li>
         </ul>
       </div>
       <div class="guideline-col">
-        <h3 class="no">✗ Not Supported</h3>
+        <h3 class="no">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Not Supported
+        </h3>
         <ul>
-          <li>• Private user accounts (requires profile permission)</li>
-          <li>• Age-restricted or country-blocked content</li>
-          <li>• Live streams or videos longer than 10 minutes</li>
-          <li>• Audio files requiring digital rights ownership (DRM)</li>
+          <li>Private user accounts (requires profile permission)</li>
+          <li>Age-restricted or country-blocked content</li>
+          <li>Live streams or videos longer than 10 minutes</li>
+          <li>Audio files requiring digital rights ownership (DRM)</li>
         </ul>
       </div>
     </section>
 
-    <!-- Actionable Test CTA -->
     <div class="guidelines-cta">
-      <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">⚡ Open Bot & Test a Public Link Now</a>
+      <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Open Bot & Test a Public Link Now
+      </a>
     </div>
 
-    <!-- Pricing Section -->
     <section id="pricing" style="margin-bottom: 6rem;">
       <div class="section-header">
         <h2>Flexible Quotas & Plans</h2>
         <p>Choose the level of speed and limits you need</p>
       </div>
-
       <div class="pricing-grid">
-        <!-- Free Tier -->
         <div class="pricing-card">
           <div class="pricing-header">
             <h3>Free Tier</h3>
@@ -845,99 +516,130 @@
           </div>
           <div class="pricing-price">0 <span>/ forever</span></div>
           <ul class="pricing-features">
-            <li>5 free downloads daily</li>
-            <li>Referral growth (+3 downloads/friend)</li>
-            <li>HD & SD Quality choices</li>
-            <li>Requires joining a partner channel</li>
-            <li class="na">Instant priority queue</li>
-            <li class="na">No verification checks</li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              5 free downloads daily
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Referral growth (+3 downloads/friend)
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              HD & SD Quality choices
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Requires joining a partner channel
+            </li>
+            <li class="na">
+              <svg class="x" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Instant priority queue
+            </li>
+            <li class="na">
+              <svg class="x" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              No verification checks
+            </li>
           </ul>
           <a href="https://t.me/savemyreeelsbot" class="btn btn-secondary">Get Started</a>
         </div>
-
-        <!-- Premium Pro -->
         <div class="pricing-card popular">
           <span class="popular-tag">Pro Tier</span>
           <div class="pricing-header">
             <h3>Premium Pro</h3>
             <p>For creators and power users</p>
           </div>
-          <div class="pricing-price">50 ⭐ <span>/ month</span></div>
+          <div class="pricing-price">50 <span>/ month</span></div>
           <ul class="pricing-features">
-            <li><b>Uncapped</b> daily downloads (subject to fair use)</li>
-            <li>Priority download queue</li>
-            <li>HD Quality set by default</li>
-            <li>Direct file deliveries</li>
-            <li>No partner channel requirements</li>
-            <li>100% ad-free experience</li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <b>Uncapped</b> daily downloads (subject to fair use)
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Priority download queue
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              HD Quality set by default
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              Direct file deliveries
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              No partner channel requirements
+            </li>
+            <li>
+              <svg class="check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              100% ad-free experience
+            </li>
           </ul>
           <a href="https://t.me/savemyreeelsbot?start=premium" class="btn btn-primary">Upgrade Now</a>
         </div>
       </div>
     </section>
 
-    <!-- Built For Section -->
     <section id="built-for" style="margin-bottom: 6rem;">
       <div class="section-header">
         <h2>Built For Speed & Utility</h2>
         <p>Helping different users save content effortlessly every day</p>
       </div>
-      
       <div class="built-for-grid">
         <div class="built-card">
-          <span>🎬</span>
+          <div class="built-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
+          </div>
           <h3>Content Creators</h3>
           <p>Collect public references, study viral reels, and gather templates to build your social media presence without watermark limitations.</p>
         </div>
         <div class="built-card">
-          <span>📚</span>
+          <div class="built-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          </div>
           <h3>Students & Researchers</h3>
           <p>Archive educational shorts, public guides, and informative tutorials directly to your device for offline study and presentations.</p>
         </div>
         <div class="built-card">
-          <span>💬</span>
+          <div class="built-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>
+          </div>
           <h3>Casual Savers</h3>
           <p>Save viral clips and funny memes directly to your camera roll, ready to share with friends on WhatsApp, Telegram, or group chats.</p>
         </div>
       </div>
     </section>
 
-    <!-- FAQ Section -->
     <section id="faq" style="margin-bottom: 2rem;">
       <div class="section-header">
         <h2>Frequently Asked Questions</h2>
         <p>Answers to common questions about the service</p>
       </div>
-
       <div class="faq-list">
         <div class="faq-item">
           <div class="faq-question">Is the bot completely free to use?</div>
           <div class="faq-answer">Yes! You get 5 free downloads every single day. If you need more, you can invite friends using your referral link to earn +3 extra daily download credits (up to a maximum cap of +30 extra downloads), or upgrade to Premium.</div>
         </div>
-
         <div class="faq-item">
           <div class="faq-question">Are the downloaded videos watermark-free?</div>
           <div class="faq-answer">Yes. All public downloads are fetched directly from source links, meaning you receive processed files without overlay watermarks (where supported by the source network).</div>
         </div>
-
         <div class="faq-item">
           <div class="faq-question">Do you store my downloaded videos on your servers?</div>
           <div class="faq-answer">No. We care about privacy. Video files are processed temporarily over SSL to construct a download link and are cleaned up shortly after. We do not host or maintain permanent storage of video payloads.</div>
         </div>
-
         <div class="faq-item">
           <div class="faq-question">How does the Referral Program work?</div>
           <div class="faq-answer">Inside the bot, run the /referral command or open the web app to copy your invite link. When a friend clicks it and starts the bot, your daily download limit is instantly increased by +3/day per active friend (up to a maximum cap of +30 extra downloads).</div>
         </div>
-
         <div class="faq-item">
           <div class="faq-question">How do I pay with Telegram Stars?</div>
           <div class="faq-answer">Send /premium in the bot chat or click the Pro tab in the Web Dashboard. A Telegram checkout invoice will appear in the chat. You can pay instantly using Telegram Stars directly through your app store securely.</div>
         </div>
-
         <div class="faq-item">
           <div class="faq-question">What specific links are supported?</div>
-          <div class="faq-answer">We support standard sharing links from: Instagram (Reels and posts), YouTube (Shorts and video uploads), and TikTok (standard video links). Private accounts are not supported.</div>
+          <div class="faq-answer">We support standard sharing links from Instagram — including Reels, posts, and carousels. Private accounts are not supported.</div>
         </div>
       </div>
     </section>
@@ -947,12 +649,13 @@
     <div class="footer-content">
       <div class="footer-brand">
         <div class="logo-container">
-          <span class="logo-icon">🎬</span>
+          <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
           <span class="logo-text">SaveMyReels</span>
         </div>
         <p>A fast, convenient Telegram utility for saving public short-form clips directly to your device with one click.</p>
       </div>
-
       <div class="footer-links">
         <div class="link-group">
           <h4>Navigation</h4>
@@ -971,10 +674,9 @@
         </div>
       </div>
     </div>
-
     <div class="footer-bottom">
       <div class="disclaimer">
-        <b>Disclaimer:</b> SaveMyReels is an independent utility tool and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Instagram, YouTube, TikTok, or Meta Platforms Inc. The downloads processed by this bot are meant for personal archiving and educational purposes only. Users are solely responsible for ensuring they possess the necessary rights and permissions to download copy-protected media.
+        <b>Disclaimer:</b> SaveMyReels is an independent utility tool and is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Instagram or Meta Platforms Inc. The downloads processed by this bot are meant for personal archiving and educational purposes only. Users are solely responsible for ensuring they possess the necessary rights and permissions to download copy-protected media.
       </div>
       <div class="copyright">
         <div>&copy; 2026 SaveMyReels. All rights reserved.</div>
@@ -984,11 +686,9 @@
   </footer>
 
   <script>
-    // FAQ Accordion functionality
     document.querySelectorAll('.faq-question').forEach(button => {
       button.addEventListener('click', () => {
-        const item = button.parentElement;
-        item.classList.toggle('open');
+        button.parentElement.classList.toggle('open');
       });
     });
   </script>

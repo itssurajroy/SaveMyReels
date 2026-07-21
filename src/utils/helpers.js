@@ -4,8 +4,8 @@
 
 const PLATFORM_PATTERNS = {
   instagram: [
-    /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reel|reels|p)\/[\w-]+/i,
-    /(?:https?:\/\/)?(?:www\.)?instagram\.com\/[\w.]+\/(?:reel|reels|p)\/[\w-]+/i,
+    /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reel|reels|p|stories)\/[\w-]+/i,
+    /(?:https?:\/\/)?(?:www\.)?instagram\.com\/[\w.]+\/(?:reel|reels|p|stories)\/[\w-]+/i,
   ],
   youtube: [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/[\w-]+/i,
@@ -21,10 +21,32 @@ const PLATFORM_PATTERNS = {
 
 /**
  * Detect which platform a URL belongs to.
+ * Extracts URLs from messages with surrounding text (e.g. "hey check this out https://instagram.com/reel/xyz nice").
  * @param {string} text - Message text that may contain a URL
  * @returns {{ platform: string, url: string } | null}
  */
 function detectPlatform(text) {
+  // First, try to extract all URLs from the message
+  const urlRegex = /https?:\/\/[^\s<>"')\]]+/gi;
+  const urls = text.match(urlRegex) || [];
+
+  // Also check bare domain patterns (without https://)
+  const bareRegex = /(?:www\.)?instagram\.com\/[^\s<>"')\]]+/gi;
+  const bareUrls = text.match(bareRegex) || [];
+
+  const allCandidates = [...urls, ...bareUrls];
+
+  for (const candidate of allCandidates) {
+    for (const [platform, patterns] of Object.entries(PLATFORM_PATTERNS)) {
+      for (const pattern of patterns) {
+        if (pattern.test(candidate)) {
+          return { platform, url: candidate };
+        }
+      }
+    }
+  }
+
+  // Fallback: try matching directly on full text (original behavior)
   for (const [platform, patterns] of Object.entries(PLATFORM_PATTERNS)) {
     for (const pattern of patterns) {
       const match = text.match(pattern);
@@ -33,6 +55,7 @@ function detectPlatform(text) {
       }
     }
   }
+
   return null;
 }
 
@@ -49,8 +72,6 @@ function containsSupportedUrl(text) {
 function getPlatformLabel(platform) {
   const labels = {
     instagram: "📸 Instagram",
-    youtube: "▶️ YouTube",
-    tiktok: "🎵 TikTok",
   };
   return labels[platform] || platform;
 }
