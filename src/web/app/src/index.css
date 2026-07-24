@@ -46,7 +46,22 @@ body {
 /* Header */
 .header {
   text-align: center;
-  padding: 30px 0;
+  padding: 16px 0 24px 0;
+}
+
+.app-banner-wrap {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 30px rgba(131, 58, 180, 0.25);
+  border: 1px solid rgba(225, 48, 108, 0.3);
+}
+
+.app-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .header h1 {

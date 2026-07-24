@@ -46,8 +46,11 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
+        <div className="app-banner-wrap">
+          <img src="/banner.png" alt="Instagram Downloader Banner" className="app-banner-img" />
+        </div>
         <h1>⚡ SaveMyReels</h1>
-        <p>Premium Instagram Downloader</p>
+        <p>Instagram Video Downloader</p>
       </header>
 
       <nav className="nav-tabs">
