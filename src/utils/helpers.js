@@ -7,16 +7,6 @@ const PLATFORM_PATTERNS = {
     /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reel|reels|p|stories)\/[\w-]+/i,
     /(?:https?:\/\/)?(?:www\.)?instagram\.com\/[\w.]+\/(?:reel|reels|p|stories)\/[\w-]+/i,
   ],
-  youtube: [
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/[\w-]+/i,
-    /(?:https?:\/\/)?youtu\.be\/[\w-]+/i,
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=[\w-]+/i,
-  ],
-  tiktok: [
-    /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[\w.]+\/video\/\d+/i,
-    /(?:https?:\/\/)?(?:vm|vt)\.tiktok\.com\/[\w]+/i,
-    /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/t\/[\w]+/i,
-  ],
 };
 
 /**

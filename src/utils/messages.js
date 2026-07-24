@@ -10,7 +10,7 @@ const DECORATIVE_DIVIDER = `\n────────────────�
 function welcomeMessage(firstName) {
   return (
     SAAS_HEADER +
-    `🎬 <b>Welcome to the Premium Instagram Downloader, ${firstName}!</b>\n\n` +
+    `🎬 <b>Welcome to the Premium Downloader, ${firstName}!</b>\n\n` +
     `I can download videos from:\n` +
     `└ 📸 <b>Instagram (Reels, Posts, Carousels)</b>\n\n` +
     `<b>How to use:</b>\n` +
@@ -178,29 +178,12 @@ function unsupportedUrlMessage() {
   return (
     SAAS_HEADER +
     `❓ <b>Unsupported Video Source</b>\n\n` +
-    `Please send a link from one of these platforms:\n` +
+    `Please send a link from Instagram:\n` +
     `└ 📸 Instagram (Reels, Posts, Carousels)\n\n` +
     `Example: <code>https://www.instagram.com/reel/...</code>`
   );
 }
 
-/**
- * YouTube/TikTok redirect message.
- */
-function youtubeTiktokRedirectMessage(platform) {
-  const platformName = platform === "youtube" ? "YouTube" : "TikTok";
-  return (
-    SAAS_HEADER +
-    `🚫 <b>${platformName} Not Supported</b>\n\n` +
-    `Sorry, I currently only support <b>Instagram</b> downloads.\n\n` +
-    `<b>Why?</b>\n` +
-    `${platformName} has anti-bot protections that prevent reliable downloads on our server.\n\n` +
-    `<b>What you can do:</b>\n` +
-    `┌ 📸 Send an <b>Instagram Reel, Post, or Carousel</b> link instead\n` +
-    `└ 🔍 Search for the content on Instagram and share that link\n\n` +
-    `<i>We're working on adding more platforms in the future!</i>`
-  );
-}
 
 /**
  * Premium info message.
@@ -359,8 +342,8 @@ function broadcastPreviewMessage(text, userCount) {
     SAAS_HEADER +
     `📢 <b>Administrative Broadcast</b>\n\n` +
     `<b>Message Content:</b>\n` +
-    `<blockquote>${text}</blockquote>\n\n" +
-    "┌ 👥 Total Recipients: <b>${formatNumber(userCount)} users</b>\n` +
+    `<blockquote>${text}</blockquote>\n\n` +
+    `┌ 👥 Total Recipients: <b>${formatNumber(userCount)} users</b>\n` +
     `└ ⏳ Confirm dispatch?`
   );
 }

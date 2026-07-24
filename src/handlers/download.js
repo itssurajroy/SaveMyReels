@@ -1,6 +1,10 @@
-const { downloadVideo } = require("../services/downloader");
+const { InlineKeyboard } = require("grammy");
+const { downloadVideo, resolveVideoUrl } = require("../services/downloader");
 const { checkRateLimit } = require("../services/rateLimiter");
-const { logDownload, getUser } = require("../database/queries");
+const { logDownload, getUser, getCachedFile, addLog } = require("../database/queries");
+
+// Track active downloads by user ID to allow aborting them
+const activeControllers = new Map();
 const {
   postDownloadKeyboard,
   limitReachedKeyboard,
@@ -38,15 +42,7 @@ function registerDownloadHandler(bot) {
 
     const { platform, url } = detected;
 
-    // Show redirect message for YouTube/TikTok
-    if (platform === "youtube" || platform === "tiktok") {
-      await ctx.reply(messages.youtubeTiktokRedirectMessage(platform), {
-        parse_mode: "HTML",
-      });
-      return;
-    }
-
-    // Only process Instagram
+    // Process supported platforms
     if (platform !== "instagram") {
       await ctx.reply(messages.unsupportedUrlMessage(), {
         parse_mode: "HTML",
@@ -72,11 +68,90 @@ function registerDownloadHandler(bot) {
     const user = await getUser(userId);
     const quality = user ? user.quality_pref || "hd" : "hd";
 
-    // Send processing starting message
+    // Send processing starting message with Cancel button
     const progressMsg = await ctx.reply(
       messages.downloadStartMessage(getPlatformLabel(platform)),
-      { parse_mode: "HTML" }
+      { 
+        parse_mode: "HTML",
+        reply_markup: new InlineKeyboard().text("❌ Cancel Download", "cancel_download")
+      }
     );
+
+    // Try sending from cache first to make downloads instant
+    const cachedFileId = await getCachedFile(url);
+    if (cachedFileId) {
+      try {
+        ctx.api.sendChatAction(ctx.chat.id, "upload_video").catch(() => {});
+        const botInfo = await bot.api.getMe();
+        const caption = messages.downloadCompleteMessage(
+          getPlatformLabel(platform),
+          rateLimit.used + 1,
+          rateLimit.limit,
+          "Instant ⚡"
+        );
+
+        const sentMessage = await ctx.replyWithVideo(cachedFileId, {
+          caption,
+          parse_mode: "HTML",
+          reply_markup: postDownloadKeyboard(botInfo.username, url),
+        });
+
+        await logDownload(userId, url, platform, cachedFileId);
+
+        if (sentMessage && sentMessage.message_id) {
+          setTimeout(() => {
+            ctx.api.deleteMessage(ctx.chat.id, sentMessage.message_id).catch(() => {});
+          }, 60 * 60 * 1000);
+        }
+
+        try {
+          await ctx.api.deleteMessage(ctx.chat.id, progressMsg.message_id);
+        } catch {}
+        return;
+      } catch (err) {
+        console.log(`Failed to send cached file_id, falling back to download: ${err.message}`);
+      }
+    }
+
+    // Try sending by URL first (takes <1s, 0 server resources/bandwidth)
+    try {
+      const resolved = await resolveVideoUrl(url, quality);
+      if (resolved && resolved.videoUrl) {
+        ctx.api.sendChatAction(ctx.chat.id, "upload_video").catch(() => {});
+        const botInfo = await bot.api.getMe();
+        const captionSuffix = messages.downloadCompleteMessage(
+          getPlatformLabel(platform),
+          rateLimit.used + 1,
+          rateLimit.limit,
+          "Instant ⚡"
+        );
+        const captionText = resolved.title ? `🎥 <b>${resolved.title}</b>\n\n${captionSuffix}` : captionSuffix;
+
+        // Route stream through Vercel proxy to bypass Telegram IP/hotlink blocks
+        const proxyUrl = `https://save-my-reels.vercel.app/api/video-proxy?url=${encodeURIComponent(resolved.videoUrl)}`;
+        const sentMessage = await ctx.replyWithVideo(proxyUrl, {
+          caption: captionText,
+          parse_mode: "HTML",
+          reply_markup: postDownloadKeyboard(botInfo.username, url),
+        });
+
+        const fileId = sentMessage?.video?.file_id || null;
+        await logDownload(userId, url, platform, fileId);
+
+        if (sentMessage && sentMessage.message_id) {
+          setTimeout(() => {
+            ctx.api.deleteMessage(ctx.chat.id, sentMessage.message_id).catch(() => {});
+          }, 60 * 60 * 1000);
+        }
+
+        try {
+          await ctx.api.deleteMessage(ctx.chat.id, progressMsg.message_id);
+        } catch {}
+        return;
+      }
+    } catch (urlSendError) {
+      console.log(`Failed to send by direct URL, falling back to download: ${urlSendError.message}`);
+    }
 
     // Show typing indicator
     ctx.api.sendChatAction(ctx.chat.id, "upload_video").catch(() => {});
@@ -104,11 +179,19 @@ function registerDownloadHandler(bot) {
 
         ctx.api.editMessageText(ctx.chat.id, progressMsg.message_id, text, {
           parse_mode: "HTML",
+          reply_markup: new InlineKeyboard().text("❌ Cancel Download", "cancel_download")
         }).catch(() => {});
       };
 
+      // Set abort controller for this download
+      const controller = new AbortController();
+      activeControllers.set(userId, controller);
+
       // Download video locally
-      result = await downloadVideo(url, quality, onProgress);
+      result = await downloadVideo(url, quality, onProgress, controller.signal);
+      
+      // Clear controller
+      activeControllers.delete(userId);
       
       // Update progress message - sending video
       await ctx.api.editMessageText(
@@ -143,9 +226,11 @@ function registerDownloadHandler(bot) {
         reply_markup: postDownloadKeyboard(botInfo.username, url),
       });
       result.sentMessage = sentMessage;
+      
+      const fileId = sentMessage?.video?.file_id || null;
  
       // Log download in cloud DB
-      await logDownload(userId, url, platform);
+      await logDownload(userId, url, platform, fileId);
 
       // Schedule auto-delete of the video message after 1 hour
       const videoMsg = result.sentMessage;
@@ -170,22 +255,43 @@ function registerDownloadHandler(bot) {
         console.error("Temp file deletion failed:", unlinkErr.message);
       }
     } catch (error) {
+      activeControllers.delete(userId);
+
+      // Check if download was aborted/cancelled by user
+      if (
+        error.message === "ABORTED" || 
+        error.code === "ERR_CANCELED" || 
+        error.name === "AbortError" || 
+        error.message.includes("canceled")
+      ) {
+        console.log(`Download for ${url} was aborted by user.`);
+        return;
+      }
+
       console.error(`Download error for ${url}:`, error.message);
+      await addLog(`[ERROR] Download error for ${url}: ${error.message} - Stack: ${error.stack}`);
       
-      // Clean up local temp file if it was created
-      try {
-        const fs = require("fs");
-        if (result && result.filePath && fs.existsSync(result.filePath)) {
-          fs.unlinkSync(result.filePath);
-        }
-      } catch {}
+      // Schedule cleaning up local temp file after 5 minutes to allow user to download it
+      if (result && result.filePath) {
+        setTimeout(() => {
+          try {
+            const fs = require("fs");
+            if (fs.existsSync(result.filePath)) {
+              fs.unlinkSync(result.filePath);
+            }
+          } catch (err) {
+            console.error("Delayed cleanup failed:", err.message);
+          }
+        }, 5 * 60 * 1000); // 5 minutes
+      }
 
       // Fallback if URL was successfully resolved but Telegram delivery failed
-      if (result && result.filePath) {
+      if (result) {
         try {
+          const downloadLink = result.videoUrl || `https://save-my-reels.vercel.app/api/download-file?path=${encodeURIComponent(result.filePath)}`;
           const directText = `⚠️ <b>Delivery Notice</b>\n` +
             `Telegram was unable to process the video for inline playback. You can download it directly:\n\n` +
-            `📥 <a href="${result.filePath}"><b>Direct Download Link</b></a>\n\n` +
+            `📥 <a href="${downloadLink}"><b>Direct Download Link</b></a>\n\n` +
             `<i>(This link expires soon. Tap to open and save the media.)</i>`;
           
           await ctx.api.editMessageText(
@@ -233,6 +339,29 @@ function registerDownloadHandler(bot) {
           reply_markup: retryKeyboard(url),
         });
       }
+    }
+  });
+
+  // Callback: Cancel download
+  bot.callbackQuery("cancel_download", async (ctx) => {
+    const userId = ctx.from.id;
+    const controller = activeControllers.get(userId);
+    if (controller) {
+      controller.abort();
+      activeControllers.delete(userId);
+      await ctx.answerCallbackQuery({ text: "🛑 Download cancelled." });
+      try {
+        await ctx.editMessageText("❌ <b>Download cancelled by user.</b>", {
+          parse_mode: "HTML",
+        });
+      } catch {}
+    } else {
+      await ctx.answerCallbackQuery({ text: "⚠️ No active download to cancel." });
+      try {
+        await ctx.editMessageText("❌ <b>Download expired or already completed.</b>", {
+          parse_mode: "HTML",
+        });
+      } catch {}
     }
   });
 

@@ -148,11 +148,14 @@ app.post("/api/download", async (req, res) => {
       return res.status(400).json({ error: "URL is required" });
     }
 
-    // Validate Instagram URL
-    const instagramPattern = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:reel|reels|p|stories)\/[\w-]+/i;
-    if (!instagramPattern.test(url)) {
-      return res.status(400).json({ error: "Invalid Instagram URL" });
+    // Validate URL and detect platform
+    const { detectPlatform } = require("../src/utils/helpers");
+    const detected = detectPlatform(url);
+    if (!detected || detected.platform !== "instagram") {
+      return res.status(400).json({ error: "Invalid or unsupported URL. Please send a valid Instagram link." });
     }
+
+    const { platform } = detected;
 
     // Get video info
     let info;
@@ -251,6 +254,60 @@ app.delete("/api/queue/:userId", (req, res) => {
   return res.status(200).json({ success: true });
 });
 
+// Endpoint to proxy video streams directly to Telegram (bypassing hotlinking restrictions)
+app.get("/api/video-proxy", async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).send("Missing url parameter");
+  }
+
+  try {
+    const axios = require("axios");
+    const response = await axios({
+      method: "get",
+      url: decodeURIComponent(url),
+      responseType: "stream",
+      timeout: 30000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+      }
+    });
+
+    if (response.headers["content-type"]) {
+      res.setHeader("content-type", response.headers["content-type"]);
+    } else {
+      res.setHeader("content-type", "video/mp4");
+    }
+    if (response.headers["content-length"]) {
+      res.setHeader("content-length", response.headers["content-length"]);
+    }
+    res.setHeader("accept-ranges", "bytes");
+
+    response.data.pipe(res);
+  } catch (err) {
+    console.error("Proxy error:", err.message);
+    res.status(500).send("Proxy error: " + err.message);
+  }
+});
+
+// Endpoint to stream local temp downloads to the user
+app.get("/api/download-file", (req, res) => {
+  const fs = require("fs");
+  const filePath = req.query.path;
+  if (!filePath || !fs.existsSync(filePath)) {
+    return res.status(404).send("File not found or expired.");
+  }
+  
+  // Ensure we only serve temporary files for safety
+  const resolvedPath = path.resolve(filePath);
+  const tempDir = path.resolve(require("os").tmpdir());
+  if (!resolvedPath.startsWith(tempDir) && !resolvedPath.includes("temp") && !resolvedPath.includes("tmp")) {
+    return res.status(403).send("Forbidden access.");
+  }
+
+  res.download(resolvedPath);
+});
+
 // ─── Static Pages ──────────────────────────────────────────
 
 // Serve Privacy & Terms Policy pages
@@ -266,6 +323,20 @@ app.get("/terms", (req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../src/web/public/index.html"));
 });
+
+// Start server locally if run directly
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  ensureDbConnected()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`🚀 SaveMyReels local API server listening on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("❌ Failed to initialize database connection for local server:", err.message);
+    });
+}
 
 // Export Express App for Vercel Serverless Function
 module.exports = app;

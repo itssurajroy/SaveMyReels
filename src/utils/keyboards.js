@@ -1,8 +1,12 @@
 const { InlineKeyboard } = require("grammy");
 const config = require("../config");
 
-// Check if WebApp URL is configured
-const hasWebApp = !!config.webappUrl;
+// Format WebApp URL to ensure it starts with https://
+let webappUrl = config.webappUrl || "";
+if (webappUrl && !webappUrl.startsWith("http")) {
+  webappUrl = `https://${webappUrl}`;
+}
+const hasWebApp = !!webappUrl;
 
 /**
  * Main menu keyboard (shown after /start and in help).
@@ -11,7 +15,7 @@ function mainMenuKeyboard() {
   const kb = new InlineKeyboard();
 
   if (hasWebApp) {
-    kb.webApp("🚀 Open Web Dashboard", `${config.webappUrl}/app`).row();
+    kb.webApp("🚀 Open Web Dashboard", `${webappUrl}/app`).row();
   }
 
   kb.text("⭐ Go Premium", "premium_info")
@@ -61,7 +65,7 @@ function postDownloadKeyboard(botUsername, originalUrl) {
   const kb = new InlineKeyboard();
 
   if (hasWebApp) {
-    kb.webApp("📊 View Web Dashboard", `${config.webappUrl}/app`);
+    kb.webApp("📊 View Web Dashboard", `${webappUrl}/app`);
   } else {
     kb.text("⭐ Go Premium", "premium_info");
   }
@@ -70,7 +74,7 @@ function postDownloadKeyboard(botUsername, originalUrl) {
   // Viral Sharing
   kb.url(
     "📤 Share Bot",
-    `https://t.me/share/url?url=https://t.me/${botUsername}&text=Download%20Instagram%20Reels,%20YouTube%20Shorts%20%26%20TikTok%20videos%20for%20free!`
+    `https://t.me/share/url?url=https://t.me/${botUsername}&text=Download%20Instagram%20Reels,%20Posts%20%26%20Carousels%20for%20free!`
   );
 
   return kb;

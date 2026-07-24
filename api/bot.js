@@ -86,7 +86,13 @@ bot.callbackQuery("verify_join", async (ctx) => {
 registerDownloadHandler(bot);
 
 bot.catch((err) => {
+  if (err.message.includes("query is too old") || err.message.includes("query ID is invalid")) {
+    console.warn("⚠️ Callback query expired before it could be answered.");
+    return;
+  }
   console.error("❌ Bot error:", err.message);
+  const q = require("../src/database/queries");
+  q.addLog(`[BOT ERROR] ${err.message} - Stack: ${err.stack}`).catch(() => {});
 });
 
 let dbInitialized = false;

@@ -49,9 +49,15 @@ async function initDatabase() {
         user_id BIGINT NOT NULL,
         url TEXT NOT NULL,
         platform TEXT NOT NULL,
+        file_id TEXT,
         downloaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
       )
+    `);
+
+    // Ensure file_id column exists if table already existed
+    await client.query(`
+      ALTER TABLE downloads ADD COLUMN IF NOT EXISTS file_id TEXT
     `);
 
     // Create logs table

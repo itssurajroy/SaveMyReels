@@ -99,11 +99,16 @@ registerHistoryHandler(bot);
 
   // Error handler
   bot.catch((err) => {
+    if (err.message.includes("query is too old") || err.message.includes("query ID is invalid")) {
+      console.warn("⚠️ Callback query expired before it could be answered.");
+      return;
+    }
     console.error("❌ Bot error:", err.message);
   });
 
   // Start polling
   await bot.start({
+    drop_pending_updates: true,
     onStart: () => {
       console.log(`✅ Bot started: @${bot.botInfo.username}`);
       console.log("   Press Ctrl+C to stop.");

@@ -34,15 +34,6 @@ function registerInlineHandler(bot) {
 
     const { platform, url } = detected;
 
-    // Redirect YouTube/TikTok
-    if (platform === "youtube" || platform === "tiktok") {
-      await ctx.answerInlineQuery([], {
-        switch_pm_text: `🚫 ${platform === "youtube" ? "YouTube" : "TikTok"} not supported. Instagram only.`,
-        switch_pm_parameter: "help",
-      });
-      return;
-    }
-
     // Only process Instagram
     if (platform !== "instagram") {
       await ctx.answerInlineQuery([], {

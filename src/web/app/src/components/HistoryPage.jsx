@@ -75,7 +75,7 @@ function HistoryPage() {
           <div className="history-info">
             <div className="history-title">{item.title || 'Instagram Video'}</div>
             <div className="history-meta">
-              {formatDate(item.created_at)} • {item.platform}
+              {formatDate(item.downloaded_at || item.created_at)} • {item.platform}
             </div>
           </div>
           <button

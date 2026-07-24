@@ -1,56 +1,38 @@
+const axios = require("axios");
 const config = require("../config");
 
 /**
- * Convert any product URL into a Cuelinks Affiliate Link.
- * Supports both Cuelinks V3 API (short clnk.in links) and high-speed fallback redirection builder.
- * 
- * @param {string} merchantUrl - Raw product link (e.g. Amazon / Flipkart product URL)
- * @returns {Promise<string>} Affiliate redirected link
+ * Generate a Cuelinks affiliate link for a given product URL.
+ * @param {string} url - The product URL
+ * @returns {Promise<string>} The affiliate URL or the original URL on failure
  */
-async function buildAffiliateLink(merchantUrl) {
-  const apiKey = config.cuelinksApiKey;
-  const pubId = config.cuelinksPubId;
+async function buildAffiliateLink(url) {
+  if (!config.cuelinksApiKey || !config.cuelinksPubId) {
+    console.warn("⚠️ Cuelinks API Key or Publisher ID is missing. Returning fallback/original URL.");
+    return `https://links2revenue.com/link?url=${encodeURIComponent(url)}&pub_id=${config.cuelinksPubId || "dummy"}`;
+  }
 
-  // 1. If API Key is configured, use the Cuelinks V3 shortened Link API
-  if (apiKey) {
-    try {
-      const response = await fetch("https://api.cuelinks.com/v3/links.json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          link: {
-            url: merchantUrl
-          }
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Cuelinks V3 typically returns { link: { affiliate_url: "https://clnk.in/xxxx" } }
-        if (data && data.link && data.link.affiliate_url) {
-          return data.link.affiliate_url;
-        }
-      } else {
-        const errText = await response.text();
-        console.warn("⚠️ Cuelinks API returned status:", response.status, errText);
+  try {
+    const response = await axios.post("https://api.cuelinks.com/v2/links.json", {
+      link: {
+        url: url
       }
-    } catch (err) {
-      console.error("❌ Cuelinks API Connection failed:", err.message);
+    }, {
+      headers: {
+        "Authorization": `Token token=${config.cuelinksApiKey}`,
+        "Content-Type": "application/json"
+      },
+      timeout: 5000
+    });
+
+    if (response.data && response.data.link && response.data.link.affiliate_url) {
+      return response.data.link.affiliate_url;
     }
+  } catch (err) {
+    console.error("❌ Cuelinks API Error:", err.message);
   }
 
-  // 2. High-speed fallback direct redirection builder (No API call, 0ms latency, works with Publisher ID)
-  if (pubId) {
-    const encodedUrl = encodeURIComponent(merchantUrl);
-    return `https://cuelinks.com/link?pub_id=${pubId}&url=${encodedUrl}`;
-  }
-
-  // 3. If no config is set, return the original URL as a safety fallback
-  console.warn("⚠️ Cuelinks credentials missing! Returning original URL.");
-  return merchantUrl;
+  return `https://links2revenue.com/link?url=${encodeURIComponent(url)}&pub_id=${config.cuelinksPubId}`;
 }
 
 module.exports = { buildAffiliateLink };

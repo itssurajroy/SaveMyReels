@@ -18,10 +18,13 @@ function authMiddleware() {
     const username = ctx.from.username || null;
     const firstName = ctx.from.first_name || "User";
 
-    // 1. Auto-register or update user info
+    // 1. Auto-register or update user info (except for /start command, which handles its own registration to capture referrals)
+    const isStartCommand = ctx.message && ctx.message.text && ctx.message.text.startsWith("/start");
     const existingUser = await getUser(userId);
     if (!existingUser) {
-      await createUser(userId, username, firstName);
+      if (!isStartCommand) {
+        await createUser(userId, username, firstName);
+      }
     } else {
       await updateUserInfo(userId, username, firstName);
     }

@@ -43,7 +43,7 @@ function registerPremiumHandler(bot) {
     // Send Telegram Stars invoice
     await ctx.replyWithInvoice(
       "⭐ SaveMyReels Premium",
-      "Unlimited downloads for 30 days across Instagram, YouTube & TikTok!",
+      "Unlimited Instagram video downloads for 30 days!",
       "premium_30d", // payload
       "XTR", // Telegram Stars currency code
       [{ label: "Premium (30 days)", amount: config.premiumPriceStars }]

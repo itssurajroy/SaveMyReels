@@ -180,11 +180,22 @@ async function getPremiumExpiry(userId) {
 /**
  * Log a download for a user.
  */
-async function logDownload(userId, url, platform) {
+async function logDownload(userId, url, platform, fileId = null) {
   await execute(
-    "INSERT INTO downloads (user_id, url, platform) VALUES ($1, $2, $3)",
-    [userId, url, platform]
+    "INSERT INTO downloads (user_id, url, platform, file_id) VALUES ($1, $2, $3, $4)",
+    [userId, url, platform, fileId]
   );
+}
+
+/**
+ * Retrieve cached Telegram file ID for a URL.
+ */
+async function getCachedFile(url) {
+  const row = await queryOne(
+    "SELECT file_id FROM downloads WHERE url = $1 AND file_id IS NOT NULL ORDER BY downloaded_at DESC LIMIT 1",
+    [url]
+  );
+  return row ? row.file_id : null;
 }
 
 /**
@@ -418,6 +429,7 @@ module.exports = {
   isPremiumActive,
   getPremiumExpiry,
   logDownload,
+  getCachedFile,
   getDailyDownloadCount,
   getDailyLimit,
   getDownloadHistory,

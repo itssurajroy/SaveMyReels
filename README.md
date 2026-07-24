@@ -1,6 +1,6 @@
-# 🎬 SaveMyReels — Multi-Platform Video Download Telegram Bot
+# 🎬 SaveMyReels — Instagram Video Downloader Telegram Bot
 
-A feature-rich Telegram bot that downloads videos from **Instagram Reels**, **YouTube Shorts**, and **TikTok** — with a complete monetization system built in.
+A feature-rich Telegram bot that downloads videos from **Instagram (Reels, Posts, Carousels)** — with a complete monetization system built in.
 
 ## 💰 Revenue Streams
 
@@ -11,9 +11,7 @@ A feature-rich Telegram bot that downloads videos from **Instagram Reels**, **Yo
 
 ## ✨ Features
 
-- 📸 **Instagram Reels** download
-- 🎵 **TikTok Videos** download
-- ▶️ **YouTube Shorts** download
+- 📸 **Instagram Reels, Posts & Carousels** download
 - ⭐ **Telegram Stars** payment integration
 - 👥 **Referral system** with stacking bonus downloads
 - 📢 **Forced channel joins** (multiple channels supported)
