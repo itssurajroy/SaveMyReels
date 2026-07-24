@@ -13,6 +13,7 @@ const { registerSettingsHandler } = require("../src/handlers/settings");
 const { registerAdminHandler } = require("../src/handlers/admin");
 const { registerInlineHandler } = require("../src/handlers/inline");
 const { registerHistoryHandler } = require("../src/handlers/history");
+const { registerWizardHandler } = require("../src/handlers/wizard");
 
 // Utilities
 const { mainMenuKeyboard, joinChannelsKeyboard } = require("../src/utils/keyboards");
@@ -27,6 +28,7 @@ bot.use(authMiddleware());
 
 // Register handlers
 registerStartHandler(bot);
+registerWizardHandler(bot);
 registerPremiumHandler(bot);
 registerReferralHandler(bot);
 registerHelpHandler(bot);

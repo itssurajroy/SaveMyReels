@@ -25,9 +25,18 @@ function registerStartHandler(bot) {
     const isNewUser = !existingUser;
 
     const { trackEvent } = require("../database/queries");
-    
+    const { sendActivityLog, formatUserLog } = require("../services/activityLogger");
+
     // Log bot start event
     await trackEvent(userId, "bot_start", { is_new: isNewUser });
+    
+    // Dispatch alert to log channel
+    sendActivityLog(
+      ctx.api,
+      `🚀 <b>Bot Start Activity</b>\n\n` +
+      `${formatUserLog(ctx.from, userId)}\n` +
+      `📌 Status: <b>${isNewUser ? "✨ New User Signed Up" : "👋 Returning User"}</b>`
+    ).catch(() => {});
 
     if (isNewUser) {
       const validReferrer = referrerId && referrerId !== userId ? referrerId : null;

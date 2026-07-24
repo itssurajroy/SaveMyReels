@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Clock, Loader2, CheckCircle2, AlertCircle, Sparkles, Layers } from 'lucide-react'
 
 function QueuePage({ settings }) {
   const [queue, setQueue] = useState([])
@@ -6,7 +7,6 @@ function QueuePage({ settings }) {
 
   useEffect(() => {
     fetchQueue()
-    // Poll for updates every 5 seconds
     const interval = setInterval(fetchQueue, 5000)
     return () => clearInterval(interval)
   }, [])
@@ -33,23 +33,12 @@ function QueuePage({ settings }) {
     }
   }
 
-  const getStatusColor = (status) => {
+  const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending': return 'status-pending'
-      case 'processing': return 'status-processing'
-      case 'completed': return 'status-completed'
-      case 'failed': return 'status-failed'
-      default: return 'status-pending'
-    }
-  }
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'pending': return '⏳ Pending'
-      case 'processing': return '⚡ Processing'
-      case 'completed': return '✅ Done'
-      case 'failed': return '❌ Failed'
-      default: return status
+      case 'processing': return <Loader2 size={16} className="animate-spin" />
+      case 'completed': return <CheckCircle2 size={16} />
+      case 'failed': return <AlertCircle size={16} />
+      default: return <Clock size={16} />
     }
   }
 
@@ -57,35 +46,40 @@ function QueuePage({ settings }) {
     return (
       <div className="empty-state">
         <div className="spinner"></div>
-        <p style={{ marginTop: 16 }}>Loading queue...</p>
+        <p style={{ marginTop: 16 }}>Loading processing queue...</p>
       </div>
     )
   }
 
   if (queue.length === 0) {
     return (
-      <div className="empty-state">
-        <div className="empty-state-icon">⏳</div>
-        <h3 className="empty-state-title">Queue is empty</h3>
+      <div className="empty-state animate-fade-in">
+        <div className="empty-state-icon">
+          <Layers size={48} />
+        </div>
+        <h3 className="empty-state-title">Processing queue empty</h3>
         <p className="empty-state-text">
-          Downloads will appear here when you start multiple downloads.
+          Active background exports will show up here.
           <br />
-          They'll be processed one by one.
+          Items are processed automatically in real time!
         </p>
       </div>
     )
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
+      <div className="section-title-badge">
+        <Sparkles size={16} /> Active Export Jobs ({queue.length})
+      </div>
       {queue.map((item, index) => (
         <div key={index} className="queue-item">
           <div className="queue-item-header">
-            <span className={`queue-item-status ${getStatusColor(item.status)}`}>
-              {getStatusText(item.status)}
+            <span className={`queue-item-status status-${item.status}`}>
+              {getStatusIcon(item.status)} {item.status.toUpperCase()}
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              {item.position && `#${item.position}`}
+              {item.position && `Position #${item.position}`}
             </span>
           </div>
           <div className="queue-item-url">{item.url}</div>

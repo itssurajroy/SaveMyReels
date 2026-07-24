@@ -77,6 +77,15 @@ function registerPremiumHandler(bot) {
         parse_mode: "HTML",
       });
 
+      const { sendActivityLog, formatUserLog } = require("../services/activityLogger");
+      sendActivityLog(
+        ctx.api,
+        `💎 <b>PREMIUM PURCHASE ALERT</b>\n\n` +
+        `${formatUserLog(ctx.from, userId)}\n` +
+        `💰 <b>Amount:</b> ${config.premiumPriceStars} Telegram Stars\n` +
+        `📅 <b>Expires:</b> ${expiryDate}`
+      ).catch(() => {});
+
       console.log(
         `💎 Premium activated for user ${userId} (${ctx.from.username || "no username"})`
       );

@@ -18,12 +18,13 @@ function mainMenuKeyboard() {
     kb.webApp("🚀 Open Web Dashboard", `${webappUrl}/app`).row();
   }
 
-  kb.text("⭐ Go Premium", "premium_info")
+  kb.text("🧙‍♂️ Setup Wizard", "start_wizard")
+    .text("⭐ Go Premium", "premium_info")
+    .row()
     .text("👥 Refer Friends", "referral_info")
-    .row()
     .text("📂 History", "history")
-    .text("⚙️ Settings", "settings")
     .row()
+    .text("⚙️ Settings", "settings")
     .text("❓ Help", "help");
 
   return kb;

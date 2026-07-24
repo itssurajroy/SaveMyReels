@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { History, Film, ExternalLink, Clock, Sparkles } from 'lucide-react'
 
 function HistoryPage() {
   const [history, setHistory] = useState([])
@@ -10,7 +11,6 @@ function HistoryPage() {
 
   const fetchHistory = async () => {
     try {
-      // Get user ID from Telegram WebApp
       const tg = window.Telegram?.WebApp
       const userId = tg?.initDataUnsafe?.user?.id
 
@@ -46,43 +46,48 @@ function HistoryPage() {
     return (
       <div className="empty-state">
         <div className="spinner"></div>
-        <p style={{ marginTop: 16 }}>Loading history...</p>
+        <p style={{ marginTop: 16 }}>Loading export history...</p>
       </div>
     )
   }
 
   if (history.length === 0) {
     return (
-      <div className="empty-state">
-        <div className="empty-state-icon">📋</div>
-        <h3 className="empty-state-title">No downloads yet</h3>
+      <div className="empty-state animate-fade-in">
+        <div className="empty-state-icon">
+          <History size={48} />
+        </div>
+        <h3 className="empty-state-title">No download history</h3>
         <p className="empty-state-text">
-          Your download history will appear here.
+          Your Instagram download log will appear here.
           <br />
-          Start by downloading an Instagram video!
+          Paste a reel link to start your first download!
         </p>
       </div>
     )
   }
 
   return (
-    <div className="history-list">
+    <div className="history-list animate-fade-in">
+      <div className="section-title-badge">
+        <Sparkles size={16} /> Exported Payload Log
+      </div>
       {history.map((item, index) => (
         <div key={index} className="history-item">
           <div className="history-icon">
-            {item.platform === 'instagram' ? '📸' : '🎥'}
+            <Film size={20} />
           </div>
           <div className="history-info">
-            <div className="history-title">{item.title || 'Instagram Video'}</div>
+            <div className="history-title">{item.title || 'Instagram Reel'}</div>
             <div className="history-meta">
-              {formatDate(item.downloaded_at || item.created_at)} • {item.platform}
+              <Clock size={12} /> {formatDate(item.downloaded_at || item.created_at)} • Instagram
             </div>
           </div>
           <button
             className="history-action"
             onClick={() => window.open(item.url, '_blank')}
           >
-            View
+            Link <ExternalLink size={14} />
           </button>
         </div>
       ))}

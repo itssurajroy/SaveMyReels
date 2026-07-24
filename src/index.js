@@ -13,6 +13,7 @@ const { registerSettingsHandler } = require("./handlers/settings");
 const { registerAdminHandler } = require("./handlers/admin");
 const { registerInlineHandler } = require("./handlers/inline");
 const { registerHistoryHandler } = require("./handlers/history");
+const { registerWizardHandler } = require("./handlers/wizard");
 
 // Utilities
 const { mainMenuKeyboard, joinChannelsKeyboard } = require("./utils/keyboards");
@@ -40,6 +41,7 @@ async function main() {
 
   // Register handlers
   registerStartHandler(bot);
+  registerWizardHandler(bot);
   registerPremiumHandler(bot);
   registerReferralHandler(bot);
   registerHelpHandler(bot);

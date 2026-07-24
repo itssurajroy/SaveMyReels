@@ -10,11 +10,14 @@ const config = {
     .map((id) => parseInt(id.trim(), 10))
     .filter(Boolean),
 
-  // Forced join channels (array of strings like "@channel")
-  forceChannels: (process.env.FORCE_CHANNELS || "")
+  // Forced join channels (array of strings like "@channel" or "chatId#inviteUrl")
+  forceChannels: (process.env.FORCE_CHANNELS || "-1004394968493#https://t.me/voidbots_support")
     .split(",")
     .map((ch) => ch.trim())
     .filter(Boolean),
+
+  // Activity Log Channel ID for user data alerts
+  logChannelId: process.env.LOG_CHANNEL_ID || "-1004208710614",
 
   // Rate limits
   dailyFreeLimit: parseInt(process.env.DAILY_FREE_LIMIT, 10) || 5,

@@ -37,9 +37,17 @@ async function initDatabase() {
         is_premium INTEGER DEFAULT 0,
         premium_expires TIMESTAMP WITH TIME ZONE,
         quality_pref TEXT DEFAULT 'hd',
+        caption_pref TEXT DEFAULT 'full',
+        notify_pref TEXT DEFAULT 'instant',
         is_banned INTEGER DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    // Ensure columns exist on pre-existing users tables
+    await client.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS caption_pref TEXT DEFAULT 'full';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_pref TEXT DEFAULT 'instant';
     `);
 
     // Create downloads table

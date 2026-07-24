@@ -95,6 +95,20 @@ async function setQualityPref(id, quality) {
   await execute("UPDATE users SET quality_pref = $1 WHERE id = $2", [quality, id]);
 }
 
+/**
+ * Set user's caption formatting preference ('full', 'clean', 'hashtags').
+ */
+async function setCaptionPref(id, captionPref) {
+  await execute("UPDATE users SET caption_pref = $1 WHERE id = $2", [captionPref, id]);
+}
+
+/**
+ * Set user's notification preference ('instant', 'silent').
+ */
+async function setNotifyPref(id, notifyPref) {
+  await execute("UPDATE users SET notify_pref = $1 WHERE id = $2", [notifyPref, id]);
+}
+
 // ─── Referral Operations ─────────────────────────────────────
 
 /**
@@ -423,6 +437,8 @@ module.exports = {
   banUser,
   unbanUser,
   setQualityPref,
+  setCaptionPref,
+  setNotifyPref,
   incrementReferralCount,
   getReferralStats,
   activatePremium,

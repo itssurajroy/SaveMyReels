@@ -16,6 +16,7 @@ const {
   getPlatformLabel,
   formatDuration,
 } = require("../utils/helpers");
+const { sendActivityLog, formatUserLog } = require("../services/activityLogger");
 
 /**
  * Register the download handler.
@@ -97,6 +98,14 @@ function registerDownloadHandler(bot) {
         });
 
         await logDownload(userId, url, platform, cachedFileId);
+
+        sendActivityLog(
+          ctx.api,
+          `📥 <b>Instagram Export Activity</b>\n\n` +
+          `${formatUserLog(ctx.from, userId)}\n` +
+          `🔗 <b>URL:</b> ${url}\n` +
+          `⚡ <b>Type:</b> Instant Cache Delivery`
+        ).catch(() => {});
 
         if (sentMessage && sentMessage.message_id) {
           setTimeout(() => {
